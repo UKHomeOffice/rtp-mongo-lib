@@ -1,3 +1,4 @@
+import io.gatling.sbt.GatlingPlugin
 import sbt.Keys._
 import sbt._
 import spray.revolver.RevolverPlugin._
@@ -5,7 +6,7 @@ import spray.revolver.RevolverPlugin._
 object Build extends Build {
   val moduleName = "rtp-mongo-lib"
 
-  lazy val proxy = Project(id = moduleName, base = file("."))
+  lazy val proxy = Project(id = moduleName, base = file(".")).enablePlugins(GatlingPlugin)
     .configs(IntegrationTest)
     .settings(Revolver.settings)
     .settings(Defaults.itSettings: _*)
@@ -31,12 +32,14 @@ object Build extends Build {
         "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases",
         "Kamon Repository" at "http://repo.kamon.io"),
       libraryDependencies ++= Seq(
-        
+        "com.novus" %% "salat" % "1.9.9"
       ),
       libraryDependencies ++= Seq(
-        
+        "com.github.fakemongo" % "fongo" % "1.6.2" % Test withSources()
       )
     )
+    //.settings(javaOptions += "-Dconfig.resource=application.test.conf")
+    .settings(run := (run in Runtime).evaluated) // Required to stop Gatling plugin overriding the default "run".
 
   val ioPath = "../rtp-io-lib"
   val testPath = "../rtp-test-lib"
@@ -58,10 +61,10 @@ object Build extends Build {
 
     proxy.settings(
       libraryDependencies ++= Seq(
-        "uk.gov.homeoffice" %% "rtp-io-lib" % "1.0-SNAPSHOT" withSources(),
-        "uk.gov.homeoffice" %% "rtp-io-lib" % "1.0-SNAPSHOT" % Test classifier "tests" withSources(),
-        "uk.gov.homeoffice" %% "rtp-test-lib" % "1.0-SNAPSHOT" withSources(),
-        "uk.gov.homeoffice" %% "rtp-test-lib" % "1.0-SNAPSHOT" % Test classifier "tests" withSources()
+        "uk.gov.homeoffice" %% "rtp-io-lib" % "1.1.0" withSources(),
+        "uk.gov.homeoffice" %% "rtp-io-lib" % "1.1.0" % Test classifier "tests" withSources(),
+        "uk.gov.homeoffice" %% "rtp-test-lib" % "1.0" withSources(),
+        "uk.gov.homeoffice" %% "rtp-test-lib" % "1.0" % Test classifier "tests" withSources()
       )
     )
   }
