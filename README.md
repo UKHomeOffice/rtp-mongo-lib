@@ -17,14 +17,7 @@ TODO
 
 Application
 -----------
-The application is configured as per the typical Scala application, where the default configuration file is "application.conf".
-This default file can be overridden with other "conf" files and then given to the application upon boot with the following example Java option:
-> -Dconfig.file=test-classes/application.test.conf
-
-Individual configuration properties can be overridden again by Java options e.g. to override which Mongodb to connect (if Mongo required configuring):
-> -Dmongo.db=some-other-mongo
-
-where this overrides the default in application.conf.
+TODO
 
 Build and Deploy
 ----------------
