@@ -15,10 +15,6 @@ Introduction
 ------------
 TODO
 
-Application
------------
-TODO
-
 Build and Deploy
 ----------------
 The project is built with SBT. On a Mac (sorry everyone else) do:
@@ -38,3 +34,8 @@ To run the specs:
 
 The following packages up this library - Note that "assembly" will first compile and test:
 > sbt assembly
+
+Testing
+-------
+There are two available specifications for tests that interact with Mongo.
+MongoSpec, which requires Mongo to be running locally, and EmbeddedMongoSpec which has an embedded Mongo per example.
