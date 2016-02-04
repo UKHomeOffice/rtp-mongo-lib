@@ -35,6 +35,7 @@ object Build extends Build {
         "com.novus" %% "salat" % "1.9.9"
       ),
       libraryDependencies ++= Seq(
+        "de.flapdoodle.embed" % "de.flapdoodle.embed.mongo" % "1.50.2" % Test withSources(),
         "com.github.fakemongo" % "fongo" % "1.6.2" % Test withSources()
       )
     )
