@@ -32,10 +32,10 @@ object Build extends Build {
         "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases",
         "Kamon Repository" at "http://repo.kamon.io"),
       libraryDependencies ++= Seq(
-        "com.novus" %% "salat" % "1.9.9"
+        "com.novus" %% "salat" % "1.9.9",
+        "de.flapdoodle.embed" % "de.flapdoodle.embed.mongo" % "1.50.2" withSources()
       ),
       libraryDependencies ++= Seq(
-        "de.flapdoodle.embed" % "de.flapdoodle.embed.mongo" % "1.50.2" % Test withSources(),
         "com.github.fakemongo" % "fongo" % "1.6.2" % Test withSources()
       )
     )
