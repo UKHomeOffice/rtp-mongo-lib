@@ -6,9 +6,10 @@ import org.specs2.specification.AroundEach
 import org.specs2.specification.core.Fragments
 import com.mongodb.ServerAddress
 import com.mongodb.casbah.{MongoClient, MongoDB}
-import de.flapdoodle.embed.mongo.MongodStarter
-import de.flapdoodle.embed.mongo.config.{MongodConfigBuilder, Net}
+import de.flapdoodle.embed.mongo.config.{MongodConfigBuilder, Net, RuntimeConfigBuilder}
 import de.flapdoodle.embed.mongo.distribution.Version
+import de.flapdoodle.embed.mongo.{Command, MongodStarter}
+import de.flapdoodle.embed.process.config.io.ProcessOutput
 import de.flapdoodle.embed.process.runtime.Network._
 
 /**
@@ -36,7 +37,12 @@ trait EmbeddedMongoSpec extends EmbeddedMongoClient {
     .net(network)
     .build
 
-  lazy val runtime = MongodStarter.getDefaultInstance
+  lazy val runtimeConfig = new RuntimeConfigBuilder()
+    .defaults(Command.MongoD)
+    .processOutput(ProcessOutput.getDefaultInstanceSilent)
+    .build()
+
+  lazy val runtime = MongodStarter.getInstance(runtimeConfig)
 
   lazy val mongodExecutable = runtime.prepare(mongodConfig)
 
