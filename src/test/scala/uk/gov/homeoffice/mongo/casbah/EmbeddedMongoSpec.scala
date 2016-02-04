@@ -20,7 +20,16 @@ trait EmbeddedMongoSpec extends EmbeddedMongoClient {
 
   sequential
 
-  lazy val network = new Net(getFreeServerPort, localhostIsIPv6)
+  lazy val network: Net = {
+    def freeServerPort: Int = {
+      val port = getFreeServerPort
+
+      if ((27017 to 27027) contains port) freeServerPort
+      else port
+    }
+
+    new Net(freeServerPort, localhostIsIPv6)
+  }
 
   lazy val mongodConfig = new MongodConfigBuilder()
     .version(Version.Main.PRODUCTION)

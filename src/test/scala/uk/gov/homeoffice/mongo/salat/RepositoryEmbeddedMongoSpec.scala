@@ -2,7 +2,7 @@ package uk.gov.homeoffice.mongo.salat
 
 import org.specs2.matcher.Scope
 import org.specs2.mutable.Specification
-import uk.gov.homeoffice.mongo.casbah.{EmbeddedMongoSpec, FongoSpec}
+import uk.gov.homeoffice.mongo.casbah.EmbeddedMongoSpec
 
 class RepositoryEmbeddedMongoSpec extends Specification with EmbeddedMongoSpec {
   trait Context extends Scope {
