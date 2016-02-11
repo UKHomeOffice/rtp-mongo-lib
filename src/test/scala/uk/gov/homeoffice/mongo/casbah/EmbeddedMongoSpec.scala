@@ -1,6 +1,5 @@
 package uk.gov.homeoffice.mongo.casbah
 
-import java.util.UUID
 import org.specs2.execute.{AsResult, Result}
 import org.specs2.mutable.SpecificationLike
 import org.specs2.specification.AroundEach
