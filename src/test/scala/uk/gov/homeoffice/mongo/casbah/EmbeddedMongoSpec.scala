@@ -1,5 +1,6 @@
 package uk.gov.homeoffice.mongo.casbah
 
+import java.util.UUID
 import org.specs2.execute.{AsResult, Result}
 import org.specs2.mutable.SpecificationLike
 import org.specs2.specification.AroundEach
@@ -62,9 +63,11 @@ trait EmbeddedMongoSpec extends EmbeddedMongoClient {
 trait EmbeddedMongoClient extends AroundEach {
   this: EmbeddedMongoSpec =>
 
+  lazy val database = "embedded-database"
+
   lazy val mongoClient = MongoClient(new ServerAddress(network.getServerAddress, network.getPort))
 
-  lazy val mongodb = mongoClient("embedded-database")
+  lazy val mongodb = mongoClient(database)
 
   override protected def around[R: AsResult](r: => R): Result = try {
     dropDatabase()
