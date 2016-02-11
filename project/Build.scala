@@ -6,7 +6,7 @@ import spray.revolver.RevolverPlugin._
 object Build extends Build {
   val moduleName = "rtp-mongo-lib"
 
-  lazy val proxy = Project(id = moduleName, base = file(".")).enablePlugins(GatlingPlugin)
+  lazy val mongo = Project(id = moduleName, base = file(".")).enablePlugins(GatlingPlugin)
     .configs(IntegrationTest)
     .settings(Revolver.settings)
     .settings(Defaults.itSettings: _*)
@@ -53,14 +53,14 @@ object Build extends Build {
     val io = ProjectRef(file(ioPath), "rtp-io-lib")
     val test = ProjectRef(file(testPath), "rtp-test-lib")
 
-    proxy.dependsOn(io % "test->test;compile->compile")
+    mongo.dependsOn(io % "test->test;compile->compile")
          .dependsOn(test % "test->test;compile->compile")
   } else {
     println("================")
     println("Build on Jenkins")
     println("================")
 
-    proxy.settings(
+    mongo.settings(
       libraryDependencies ++= Seq(
         "uk.gov.homeoffice" %% "rtp-io-lib" % "1.2.0-SNAPSHOT" withSources(),
         "uk.gov.homeoffice" %% "rtp-io-lib" % "1.2.0-SNAPSHOT" % Test classifier "tests" withSources(),
