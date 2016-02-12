@@ -7,7 +7,7 @@ import uk.gov.homeoffice.mongo.casbah.EmbeddedMongoSpec
 class RepositoryEmbeddedMongoSpec extends Specification with EmbeddedMongoSpec {
   trait Context extends Scope {
     val repository = new Repository[TestModel] with TestMongo {
-      val collection = "tests"
+      val collectionName = "tests"
     }
   }
 

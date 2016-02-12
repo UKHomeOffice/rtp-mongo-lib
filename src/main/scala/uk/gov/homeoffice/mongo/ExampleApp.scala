@@ -27,7 +27,7 @@ object ExampleMongo {
 }
 
 trait ExampleRepository extends Repository[Example] {
-  val collection = "examples"
+  val collectionName = "examples"
 }
 
 case class Example(description: String)

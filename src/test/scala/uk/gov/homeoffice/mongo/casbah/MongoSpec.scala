@@ -15,7 +15,7 @@ import uk.gov.homeoffice.configuration.{ConfigFactorySupport, HasConfig}
  * By default the Mongo client managed by this trait, connects to a "default" Mongo i.e. 127.0.0.1 on port 27017 - these can be overwritten via configurations "mongo.host" and "mongo.port"
  * Note that there is an embedded mongo version of this trait, though the underlying "test" Mongo does not implement all of the Mongo API.
  */
-trait MongoSpec extends AroundEach with HasConfig with ConfigFactorySupport {
+trait MongoSpec extends AroundEach with HasConfig with ConfigFactorySupport with MongoRunning {
   this: Specification =>
 
   isolated
@@ -34,12 +34,16 @@ trait MongoSpec extends AroundEach with HasConfig with ConfigFactorySupport {
 
   lazy val mongodb = mongoClient(database)
 
-  override def around[T: AsResult](t: => T): Result = try {
-    debug(s"+ Created $database in spec $getClass")
-    AsResult(t)
-  } finally {
-    debug(s"x Dropping $database")
-    closeMongo
+  override def around[T: AsResult](t: => T): Result = if (mongoRunning) {
+    try {
+      debug(s"+ Created $database in spec $getClass")
+      AsResult(t)
+    } finally {
+      debug(s"x Dropping $database")
+      closeMongo
+    }
+  } else {
+    AsResult(skipped("*** Mongo is not running!!! ***"))
   }
 
   override def finalize() = {
@@ -54,5 +58,19 @@ trait MongoSpec extends AroundEach with HasConfig with ConfigFactorySupport {
 
   trait TestMongo extends Mongo {
     lazy val db: MongoDB = mongodb
+  }
+}
+
+trait MongoRunning {
+  this: MongoSpec =>
+
+  def mongoRunning: Boolean = try {
+    val collection = mongodb.getCollection(UUID.randomUUID().toString)
+    collection.drop()
+    true
+  } catch {
+    case t: Throwable =>
+      println(s"Mongo connection issue: ${t.getMessage}")
+      false
   }
 }

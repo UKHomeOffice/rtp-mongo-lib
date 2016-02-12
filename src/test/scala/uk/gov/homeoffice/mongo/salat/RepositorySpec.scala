@@ -7,7 +7,7 @@ import uk.gov.homeoffice.mongo.casbah.MongoSpec
 class RepositorySpec extends Specification with MongoSpec {
   trait Context extends Scope {
     val repository = new Repository[TestModel] with TestMongo {
-      val collection = "tests"
+      val collectionName = "tests"
     }
   }
 
