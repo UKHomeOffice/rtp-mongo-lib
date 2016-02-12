@@ -36,7 +36,6 @@ object Build extends Build {
         "de.flapdoodle.embed" % "de.flapdoodle.embed.mongo" % "1.50.2" withSources()
       ),
       libraryDependencies ++= Seq(
-        "com.github.fakemongo" % "fongo" % "1.6.2" % Test withSources()
       )
     )
     //.settings(javaOptions += "-Dconfig.resource=application.test.conf")

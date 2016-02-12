@@ -6,7 +6,7 @@ import uk.gov.homeoffice.mongo.casbah.EmbeddedMongoSpec
 
 class RepositoryEmbeddedMongoSpec extends Specification with EmbeddedMongoSpec {
   trait Context extends Scope {
-    val repository = new Repository[Test] with TestMongo {
+    val repository = new Repository[TestModel] with TestMongo {
       val collection = "tests"
     }
   }
@@ -17,25 +17,25 @@ class RepositoryEmbeddedMongoSpec extends Specification with EmbeddedMongoSpec {
     }
 
     "save and find 1 test" in new Context {
-      val test = Test("1")
-      repository save test
+      val testModel = TestModel("1")
+      repository save testModel
 
       repository.findAll().toList must beLike {
-        case List(Test(id)) => id mustEqual test.id
+        case List(TestModel(id)) => id mustEqual testModel.id
       }
     }
 
     "save and find 2 tests" in new Context {
-      val test1 = Test("1")
-      repository save test1
+      val testModel1 = TestModel("1")
+      repository save testModel1
 
-      val test2 = Test("2")
-      repository save test2
+      val testModel2 = TestModel("2")
+      repository save testModel2
 
       repository.findAll().toList must beLike {
-        case List(Test(id1), Test(id2)) =>
-          id1 mustEqual test1.id
-          id2 mustEqual test2.id
+        case List(TestModel(id1), TestModel(id2)) =>
+          id1 mustEqual testModel1.id
+          id2 mustEqual testModel2.id
       }
     }
   }
