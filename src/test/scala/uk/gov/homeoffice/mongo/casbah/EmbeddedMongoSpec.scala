@@ -1,5 +1,6 @@
 package uk.gov.homeoffice.mongo.casbah
 
+import scala.util.Try
 import org.specs2.execute.{AsResult, Result}
 import org.specs2.mutable.SpecificationLike
 import org.specs2.specification.AroundEach
@@ -75,10 +76,14 @@ trait EmbeddedMongoClient extends AroundEach {
     dropDatabase()
   }
 
-  private def dropDatabase() = mongoClient getDatabaseNames() map {
-    mongoClient.getDB
-  } foreach {
-    _.dropDatabase()
+  private def dropDatabase() = Try {
+    mongoClient getDatabaseNames()
+  } map {
+    _.map {
+      mongoClient.getDB
+    } foreach {
+      _.dropDatabase()
+    }
   }
 
   trait TestMongo extends Mongo {
