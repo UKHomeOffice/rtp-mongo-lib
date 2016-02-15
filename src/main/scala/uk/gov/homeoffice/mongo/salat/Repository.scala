@@ -6,7 +6,7 @@ import com.novus.salat.global.ctx
 import uk.gov.homeoffice.mongo.casbah.Mongo
 
 abstract class Repository[M <: AnyRef with Product](implicit m: Manifest[M]) extends ModelCompanion[M, ObjectId] with Mongo {
-  val collection: String
+  val collectionName: String
 
-  lazy val dao = new SalatDAO[M, ObjectId](db(collection)) {}
+  lazy val dao = new SalatDAO[M, ObjectId](db(collectionName)) {}
 }

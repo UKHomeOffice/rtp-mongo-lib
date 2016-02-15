@@ -28,7 +28,7 @@ trait MongoSupport {
     dbObject.asInstanceOf[DBObject]
   }
 
-  implicit def asJson(dbObject: DBObject)(implicit formats: Formats = DefaultFormats): JValue = parse(dbObject.toString)
+  implicit def toJson(dbObject: DBObject)(implicit formats: Formats = DefaultFormats): JValue = parse(dbObject.toString)
 
   implicit class ObjectIdOps(_id: ObjectId) {
     def ~(j: JValue): JValue = merge(j)

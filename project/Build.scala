@@ -13,7 +13,7 @@ object Build extends Build {
     .settings(
       name := moduleName,
       organization := "uk.gov.homeoffice",
-      version := "1.0.0",
+      version := "1.1.0-SNAPSHOT",
       scalaVersion := "2.11.7",
       scalacOptions ++= Seq(
         "-feature",
@@ -36,7 +36,6 @@ object Build extends Build {
         "de.flapdoodle.embed" % "de.flapdoodle.embed.mongo" % "1.50.2" withSources()
       ),
       libraryDependencies ++= Seq(
-        "com.github.fakemongo" % "fongo" % "1.6.2" % Test withSources()
       )
     )
     //.settings(javaOptions += "-Dconfig.resource=application.test.conf")
