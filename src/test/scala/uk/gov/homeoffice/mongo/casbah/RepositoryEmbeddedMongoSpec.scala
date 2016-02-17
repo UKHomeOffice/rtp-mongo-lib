@@ -6,7 +6,7 @@ import org.specs2.matcher.Scope
 import org.specs2.mutable.Specification
 import uk.gov.homeoffice.json.JsonFormats
 
-class RepositoryEmbeddedMongoSpec extends Specification with EmbeddedMongoSpec with MongoSupport with JsonFormats {
+class RepositoryEmbeddedMongoSpec extends Specification with EmbeddedMongoSpecification with MongoSupport with JsonFormats {
   trait Context extends Scope {
     val repository = (new Repository with TestMongo {
       val collectionName = "tests"
