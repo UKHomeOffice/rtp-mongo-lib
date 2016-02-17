@@ -17,7 +17,7 @@ import de.flapdoodle.embed.process.runtime.Network._
  * Mix in this trait to provide a connection to an embedded Mongo for testing.
  * An embedded Mongo is started for each specification and examples within a specification will be run sequentially to allow for database clearance, avoiding any test interference.
  */
-trait EmbeddedMongoSpec extends EmbeddedMongoClient {
+trait EmbeddedMongoSpecification extends EmbeddedMongoClient {
   this: SpecificationLike =>
 
   sequential
@@ -61,7 +61,7 @@ trait EmbeddedMongoSpec extends EmbeddedMongoClient {
 }
 
 trait EmbeddedMongoClient extends AroundEach {
-  this: EmbeddedMongoSpec =>
+  this: EmbeddedMongoSpecification =>
 
   lazy val database = "embedded-database"
 

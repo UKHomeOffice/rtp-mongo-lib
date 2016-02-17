@@ -2,9 +2,9 @@ package uk.gov.homeoffice.mongo.salat
 
 import org.specs2.matcher.Scope
 import org.specs2.mutable.Specification
-import uk.gov.homeoffice.mongo.casbah.EmbeddedMongoSpec
+import uk.gov.homeoffice.mongo.casbah.EmbeddedMongoSpecification
 
-class RepositoryEmbeddedMongoSpec extends Specification with EmbeddedMongoSpec {
+class RepositoryEmbeddedMongoSpec extends Specification with EmbeddedMongoSpecification {
   trait Context extends Scope {
     val repository = new Repository[TestModel] with TestMongo {
       val collectionName = "tests"
