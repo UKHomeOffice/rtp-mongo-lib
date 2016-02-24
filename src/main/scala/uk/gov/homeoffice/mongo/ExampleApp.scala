@@ -3,7 +3,7 @@ package uk.gov.homeoffice.mongo
 import java.util.UUID
 import com.mongodb.casbah.MongoClientURI
 import com.mongodb.casbah.commons.MongoDBObject
-import uk.gov.homeoffice.mongo.casbah.{MongoSupport, Mongo}
+import uk.gov.homeoffice.mongo.casbah.Mongo
 import uk.gov.homeoffice.mongo.salat.Repository
 
 object ExampleApp extends App {
