@@ -23,20 +23,22 @@ object Build extends Build {
         "-language:reflectiveCalls",
         "-language:postfixOps",
         "-Yrangepos",
-        "-Yrepl-sync"),
+        "-Yrepl-sync"
+      ),
       ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) },
       resolvers ++= Seq(
         "Artifactory Snapshot Realm" at "http://artifactory.registered-traveller.homeoffice.gov.uk/artifactory/libs-snapshot-local/",
         "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/",
         "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/",
         "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases",
-        "Kamon Repository" at "http://repo.kamon.io")
+        "Kamon Repository" at "http://repo.kamon.io"
+      )
     )
-    .settings({
+    .settings(libraryDependencies ++= {
       val `rtp-io-lib-version` = "1.2.0-SNAPSHOT"
       val `rtp-test-lib-version` = "1.2.0-SNAPSHOT"
 
-      libraryDependencies ++= Seq(
+      Seq(
         "com.novus" %% "salat" % "1.9.9",
         "de.flapdoodle.embed" % "de.flapdoodle.embed.mongo" % "1.50.2" withSources(),
         "uk.gov.homeoffice" %% "rtp-io-lib" % `rtp-io-lib-version` withSources(),
