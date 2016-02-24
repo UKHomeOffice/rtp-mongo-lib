@@ -35,6 +35,7 @@ object Build extends Build {
       )
     )
     .settings(libraryDependencies ++= {
+      val `gatling-verson` = "2.1.7"
       val `rtp-io-lib-version` = "1.2.0-SNAPSHOT"
       val `rtp-test-lib-version` = "1.2.0-SNAPSHOT"
 
@@ -44,6 +45,8 @@ object Build extends Build {
         "uk.gov.homeoffice" %% "rtp-io-lib" % `rtp-io-lib-version` withSources(),
         "uk.gov.homeoffice" %% "rtp-test-lib" % `rtp-test-lib-version` withSources()
       ) ++ Seq(
+        "io.gatling.highcharts" % "gatling-charts-highcharts" % `gatling-verson` % IntegrationTest withSources(),
+        "io.gatling" % "gatling-test-framework" % `gatling-verson` % IntegrationTest withSources(),
         "uk.gov.homeoffice" %% "rtp-io-lib" % `rtp-io-lib-version` % Test classifier "tests" withSources(),
         "uk.gov.homeoffice" %% "rtp-test-lib" % `rtp-test-lib-version` % Test classifier "tests" withSources()
       )
