@@ -73,7 +73,7 @@ trait MyMongo extends Mongo {
 }
 
 object MyMongo {
-  lazy val mydb = Mongo.db(MongoClientURI(ConfigFactory.load.getString("mydb")))
+  lazy val mydb = Mongo db MongoClientURI(ConfigFactory.load.getString("mydb"))
 }
 ```
 
@@ -84,9 +84,11 @@ Well, the trait (MyMongo) is a must, as we need this to mixin to all your reposi
 Then the object reads the actual configuration - but why here, why not in the trait? For example, why not just do the following?
 ```scala
 trait MyMongo extends Mongo {
-  lazy val db = Mongo.db(MongoClientURI(ConfigFactory.load.getString("mydb")))
+  lazy val db = Mongo db MongoClientURI(ConfigFactory.load.getString("mydb"))
 }
 ```
+
+Big mistake! Everytime the trait is now mixed in, not only is a new Mongo connection created, an actual Mongo pool of connections are created - you'll soon have many connection pools and your application will quickly slow down.
 
 Testing
 -------
