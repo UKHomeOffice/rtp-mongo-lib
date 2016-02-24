@@ -30,18 +30,22 @@ object Build extends Build {
         "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/",
         "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/",
         "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases",
-        "Kamon Repository" at "http://repo.kamon.io"),
+        "Kamon Repository" at "http://repo.kamon.io")
+    )
+    .settings({
+      val `rtp-io-lib-version` = "1.2.0-SNAPSHOT"
+      val `rtp-test-lib-version` = "1.2.0-SNAPSHOT"
+
       libraryDependencies ++= Seq(
         "com.novus" %% "salat" % "1.9.9",
         "de.flapdoodle.embed" % "de.flapdoodle.embed.mongo" % "1.50.2" withSources(),
-        "uk.gov.homeoffice" %% "rtp-io-lib" % "1.2.0-SNAPSHOT" withSources(),
-        "uk.gov.homeoffice" %% "rtp-test-lib" % "1.2.0-SNAPSHOT" withSources()
-      ),
-      libraryDependencies ++= Seq(
-        "uk.gov.homeoffice" %% "rtp-io-lib" % "1.2.0-SNAPSHOT" % Test classifier "tests" withSources(),
-        "uk.gov.homeoffice" %% "rtp-test-lib" % "1.2.0-SNAPSHOT" % Test classifier "tests" withSources()
+        "uk.gov.homeoffice" %% "rtp-io-lib" % `rtp-io-lib-version` withSources(),
+        "uk.gov.homeoffice" %% "rtp-test-lib" % `rtp-test-lib-version` withSources()
+      ) ++ Seq(
+        "uk.gov.homeoffice" %% "rtp-io-lib" % `rtp-io-lib-version` % Test classifier "tests" withSources(),
+        "uk.gov.homeoffice" %% "rtp-test-lib" % `rtp-test-lib-version` % Test classifier "tests" withSources()
       )
-    )
+    })
     //.settings(javaOptions += "-Dconfig.resource=application.test.conf")
     .settings(run := (run in Runtime).evaluated) // Required to stop Gatling plugin overriding the default "run".
 }
