@@ -6,7 +6,7 @@ import spray.revolver.RevolverPlugin._
 object Build extends Build {
   val moduleName = "rtp-mongo-lib"
 
-  lazy val mongo = Project(id = moduleName, base = file(".")).enablePlugins(GatlingPlugin)
+  val root = Project(id = moduleName, base = file(".")).enablePlugins(GatlingPlugin)
     .configs(IntegrationTest)
     .settings(Revolver.settings)
     .settings(Defaults.itSettings: _*)
