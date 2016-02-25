@@ -73,7 +73,7 @@ trait MyMongo extends Mongo {
 }
 
 object MyMongo {
-  lazy val mydb = Mongo db MongoClientURI(ConfigFactory.load.getString("mydb"))
+  lazy val mydb = Mongo db MongoClientURI(ConfigFactory.load getString "mydb")
 }
 ```
 
@@ -84,11 +84,26 @@ Well, the trait (MyMongo) is a must, as we need this to mixin to all your reposi
 Then the object reads the actual configuration - but why here, why not in the trait? For example, why not just do the following?
 ```scala
 trait MyMongo extends Mongo {
-  lazy val db = Mongo db MongoClientURI(ConfigFactory.load.getString("mydb"))
+  lazy val db = Mongo db MongoClientURI(ConfigFactory.load getString "mydb")
 }
 ```
 
 Big mistake! Everytime the trait is now mixed in, not only is a new Mongo connection created, an actual Mongo pool of connections are created - you'll soon have many connection pools and your application will quickly slow down.
+
+Salat Repository Example
+------------------------
+```scala
+import uk.gov.homeoffice.mongo.salat.Repository
+
+trait ThingsRepository extends Repository[Thing] {
+  val collectionName = "things"
+}
+
+val thingsRepository = new ThingsRepository with MyMongo
+thingsRepository save Thing()
+```
+
+where Thing would be one of your case classes.
 
 Testing
 -------
@@ -98,3 +113,22 @@ MongoSpecification, which requires Mongo to be running locally, and EmbeddedMong
 Via EmbeddedMongoSpecification, each example, within a specification, is run sequentially, as a test database is created and dropped.
 
 And via MongoSpecification, a unique test database is generated per example of a specification, allowing each to run (by default) in parallel.
+
+EmbeddedMongoSpecification Example
+----------------------------------
+This trait must be mixed into a Specs2 specification and will give you a TestMongo to mix into your repository.
+```scala
+class RepositoryEmbeddedMongoSpec extends Specification with EmbeddedMongoSpecification {
+  trait Context extends Scope {
+    val repository = new Repository[Thing] with TestMongo {
+      val collectionName = "tests"
+    }
+  }
+
+  "Repository" should {
+    "find nothing" in new Context {
+      repository.findAll().toList must beEmpty
+    }
+  }
+}
+```  

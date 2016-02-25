@@ -8,6 +8,9 @@ import com.mongodb.casbah.commons.MongoDBObject
 import com.mongodb.casbah.commons.conversions.scala.{RegisterConversionHelpers, RegisterJodaTimeConversionHelpers}
 import com.mongodb.util.JSON
 
+/**
+  * Mix this in for useful support to your Mongo functionality.
+  */
 trait MongoSupport {
   RegisterConversionHelpers()
   RegisterJodaTimeConversionHelpers()
