@@ -13,8 +13,8 @@ object ExampleApp extends App {
   repository save example
 
   repository.findOne(MongoDBObject("description" -> example.description)) match {
-    case Some(ex) => println("Successfully saved to database and read back in!")
-    case None => println("An issue occurred while trying to save to database and read back in!!!!!")
+    case Some(x) => println(s"***** Successfully saved to database and read back in: $x *****")
+    case None => println("***** An issue occurred while trying to save to database and read back in! *****")
   }
 }
 

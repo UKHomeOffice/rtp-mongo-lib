@@ -131,4 +131,11 @@ class RepositoryEmbeddedMongoSpec extends Specification with EmbeddedMongoSpecif
     }
   }
 }
-```  
+```
+
+Example App
+-----------
+To run ExampleApp:
+```bash
+sbt test:run
+```
