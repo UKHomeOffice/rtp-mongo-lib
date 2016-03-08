@@ -26,22 +26,34 @@ A Salat Repository represents a Mongodb collection to save a "domain" object (a 
 Build and Deploy
 ----------------
 The project is built with SBT. On a Mac (sorry everyone else) do:
-> brew install sbt
+```bash
+brew install sbt
+```
 
 It is also a good idea to install Typesafe Activator (which sits on top of SBT) for when you need to create new projects - it also has some SBT extras, so running an application with Activator instead of SBT can be useful. On Mac do:
-> brew install typesafe-activator
+```bash
+brew install typesafe-activator
+```
 
 To compile:
-> sbt compile
+```bash
+sbt compile
+```
 
 or
-> activator compile
+```bash
+activator compile
+```
 
 To run the specs:
-> sbt test
+```bash
+sbt test
+```
 
 The following packages up this library - Note that "assembly" will first compile and test:
-> sbt assembly
+```bash
+sbt assembly
+```
 
 Casbah Repository Example
 -------------------------

@@ -3,7 +3,7 @@ package uk.gov.homeoffice.mongo.casbah
 import java.util.UUID
 import scala.util.Try
 import org.specs2.execute.{AsResult, Result}
-import org.specs2.mutable.{SpecificationLike, Specification}
+import org.specs2.mutable.SpecificationLike
 import org.specs2.specification.AroundEach
 import com.mongodb.casbah.{MongoClient, MongoClientURI, MongoDB}
 import uk.gov.homeoffice.configuration.{ConfigFactorySupport, HasConfig}
@@ -15,8 +15,8 @@ import uk.gov.homeoffice.configuration.{ConfigFactorySupport, HasConfig}
  * By default the Mongo client managed by this trait, connects to a "default" Mongo i.e. 127.0.0.1 on port 27017 - these can be overwritten via configurations "mongo.host" and "mongo.port"
  * Note that there is an embedded mongo version of this trait, though the underlying "test" Mongo does not implement all of the Mongo API.
  */
-trait MongoSpecification extends AroundEach with HasConfig with ConfigFactorySupport with MongoRunning {
-  this: SpecificationLike =>
+trait MongoSpecification extends Mongo with AroundEach with HasConfig with ConfigFactorySupport with MongoRunning {
+  spec: SpecificationLike =>
 
   isolated
 
@@ -32,7 +32,7 @@ trait MongoSpecification extends AroundEach with HasConfig with ConfigFactorySup
 
   lazy val mongoClient = MongoClient(mongoClientURI)
 
-  lazy val mongodb = mongoClient(database)
+  lazy val db = mongoClient(database)
 
   override def around[T: AsResult](t: => T): Result = if (mongoRunning) {
     try {
@@ -57,7 +57,7 @@ trait MongoSpecification extends AroundEach with HasConfig with ConfigFactorySup
   }
 
   trait TestMongo extends Mongo {
-    lazy val db: MongoDB = mongodb
+    lazy val db: MongoDB = spec.db
   }
 }
 
@@ -65,7 +65,7 @@ trait MongoRunning {
   this: MongoSpecification =>
 
   def mongoRunning: Boolean = try {
-    val collection = mongodb.getCollection(UUID.randomUUID().toString)
+    val collection = db.getCollection(UUID.randomUUID().toString)
     collection.drop()
     true
   } catch {

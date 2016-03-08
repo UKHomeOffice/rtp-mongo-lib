@@ -58,14 +58,14 @@ trait EmbeddedMongoSpecification extends EmbeddedMongoClient {
   }
 }
 
-trait EmbeddedMongoClient extends AroundEach {
-  this: EmbeddedMongoSpecification =>
+trait EmbeddedMongoClient extends Mongo with AroundEach {
+  client: EmbeddedMongoSpecification =>
 
   lazy val database = "embedded-database"
 
   lazy val mongoClient = MongoClient(new ServerAddress(network.getServerAddress, network.getPort))
 
-  lazy val mongodb = mongoClient(database)
+  lazy val db = mongoClient(database)
 
   override protected def around[R: AsResult](r: => R): Result = try {
     dropDatabase()
@@ -85,6 +85,6 @@ trait EmbeddedMongoClient extends AroundEach {
   }
 
   trait TestMongo extends Mongo {
-    lazy val db: MongoDB = mongodb
+    lazy val db: MongoDB = client.db
   }
 }
