@@ -15,7 +15,7 @@ object Build extends Build {
     .settings(
       name := moduleName,
       organization := "uk.gov.homeoffice",
-      version := "1.6.0",
+      version := "1.7.0",
       scalaVersion := "2.11.8",
       scalacOptions ++= Seq(
         "-feature",
@@ -30,6 +30,7 @@ object Build extends Build {
       ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) },
       resolvers ++= Seq(
         "Artifactory Snapshot Realm" at "http://artifactory.registered-traveller.homeoffice.gov.uk/artifactory/libs-snapshot-local/",
+        "Artifactory Release Realm" at "http://artifactory.registered-traveller.homeoffice.gov.uk/artifactory/libs-release-local/",
         "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/",
         "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/",
         "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases",
