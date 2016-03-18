@@ -15,7 +15,7 @@ object Build extends Build {
     .settings(
       name := moduleName,
       organization := "uk.gov.homeoffice",
-      version := "1.7.0",
+      version := "1.7.1",
       scalaVersion := "2.11.8",
       scalacOptions ++= Seq(
         "-feature",
@@ -39,8 +39,8 @@ object Build extends Build {
     )
     .settings(libraryDependencies ++= {
       val `gatling-verson` = "2.1.7"
-      val `rtp-io-lib-version` = "1.6.0"
-      val `rtp-test-lib-version` = "1.2.0"
+      val `rtp-io-lib-version` = "1.7.1"
+      val `rtp-test-lib-version` = "1.2.1"
 
       Seq(
         "com.novus" %% "salat" % "1.9.9",
