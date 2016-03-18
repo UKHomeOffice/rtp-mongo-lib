@@ -39,7 +39,7 @@ object Build extends Build {
     )
     .settings(libraryDependencies ++= {
       val `gatling-verson` = "2.1.7"
-      val `rtp-io-lib-version` = "1.7.1"
+      val `rtp-io-lib-version` = "1.7.2"
       val `rtp-test-lib-version` = "1.2.1"
 
       Seq(
