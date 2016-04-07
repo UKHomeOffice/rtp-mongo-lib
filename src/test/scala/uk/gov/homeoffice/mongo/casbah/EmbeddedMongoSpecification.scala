@@ -50,10 +50,12 @@ trait EmbeddedMongoSpecification extends EmbeddedMongoClient {
   override def map(fs: => Fragments): Fragments = startMongo ^ fs ^ stopMongo
 
   private def startMongo = step {
+    println("Starting Mongo")
     mongodExecutable.start()
   }
 
   private def stopMongo = step {
+    println("Stopping Mongo")
     mongodExecutable.stop()
   }
 }
