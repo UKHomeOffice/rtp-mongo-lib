@@ -24,7 +24,7 @@ trait EmbeddedMongo extends Scope with ComposableAround with EmbeddedMongoExecut
   }
 }
 
-trait MongoClient {
+trait MongoClient extends Mongo {
   self: EmbeddedMongo =>
 
   lazy val database = "embedded-database"
