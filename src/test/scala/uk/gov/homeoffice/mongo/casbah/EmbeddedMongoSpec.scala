@@ -24,7 +24,7 @@ class EmbeddedMongoSpec extends Specification with MongoSupport with JsonFormats
       (found \ "key").extract[String] mustEqual "value"
     }
 
-    /*"save and find 2 tests" in new Context {
+    "save and find 2 tests" in new Context {
       val json1 = JObject("key" -> JInt(1))
       repository save json1
 
@@ -36,6 +36,6 @@ class EmbeddedMongoSpec extends Specification with MongoSupport with JsonFormats
 
       val found2: JValue = repository.find.toList(1)
       (found2 \ "key").extract[Int] mustEqual 2
-    }*/
+    }
   }
 }
