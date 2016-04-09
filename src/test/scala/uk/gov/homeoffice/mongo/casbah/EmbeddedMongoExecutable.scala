@@ -12,6 +12,7 @@ trait EmbeddedMongoExecutable {
     def freeServerPort: Int = {
       val port = getFreeServerPort
 
+      // Avoid standard Mongo ports in case a standalone Mongo is running.
       if ((27017 to 27027) contains port) {
         TimeUnit.MILLISECONDS.sleep(10)
         freeServerPort
