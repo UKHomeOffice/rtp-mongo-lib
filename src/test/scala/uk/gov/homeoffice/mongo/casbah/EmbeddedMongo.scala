@@ -1,5 +1,6 @@
 package uk.gov.homeoffice.mongo.casbah
 
+import java.util.concurrent.TimeUnit
 import com.mongodb.ServerAddress
 import com.mongodb.casbah.MongoDB
 import org.specs2.execute.{AsResult, Result}
@@ -11,8 +12,26 @@ import uk.gov.homeoffice.specs2.ComposableAround
   * An embedded Mongo is started for each example.
   */
 trait EmbeddedMongo extends Scope with ComposableAround with EmbeddedMongoExecutable with MongoClient {
-  mongodExecutable.start()
-  println(s"Started Mongo running on ${network.getPort}")
+  startMongo()
+
+  def startMongo(): Unit = {
+    def startMongo(attempt: Int): Unit = try {
+      mongodExecutable.start()
+      println(s"Started Mongo running on ${network.getPort}")
+    } catch {
+      case t: Throwable =>
+        val nextAttempt = attempt + 1
+
+        if (nextAttempt <= 5) {
+          TimeUnit.SECONDS.sleep(2)
+          startMongo(nextAttempt)
+        } else {
+          throw new Exception("Failed to start Mongo after 5 attempts", t)
+        }
+    }
+
+    startMongo(1)
+  }
 
   override def around[R: AsResult](r: => R): Result = {
     try {
