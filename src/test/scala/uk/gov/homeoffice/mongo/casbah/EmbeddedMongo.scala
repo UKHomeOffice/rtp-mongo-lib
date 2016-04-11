@@ -20,6 +20,7 @@ trait EmbeddedMongo extends Scope with ComposableAround with EmbeddedMongoExecut
       println(s"Started Mongo running on ${network.getPort}")
     } catch {
       case t: Throwable =>
+        println(s"Failed to start Mongo on attempt number $attempt")
         val nextAttempt = attempt + 1
 
         if (nextAttempt <= 5) {
