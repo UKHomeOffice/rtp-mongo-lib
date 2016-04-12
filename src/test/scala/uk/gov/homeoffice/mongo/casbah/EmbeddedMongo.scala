@@ -5,19 +5,20 @@ import com.mongodb.ServerAddress
 import com.mongodb.casbah.MongoDB
 import org.specs2.execute.{AsResult, Result}
 import org.specs2.matcher.Scope
+import grizzled.slf4j.Logging
 import uk.gov.homeoffice.specs2.ComposableAround
 
 /**
   * Mix in this trait (at example level) to provide a connection to an embedded Mongo for testing.
   * An embedded Mongo is started for each example.
   */
-trait EmbeddedMongo extends Scope with ComposableAround with EmbeddedMongoExecutable with MongoClient {
+trait EmbeddedMongo extends Scope with ComposableAround with EmbeddedMongoExecutable with MongoClient with Logging {
   startMongo()
 
   def startMongo(): Unit = {
     def startMongo(attempt: Int): Unit = try {
       mongodExecutable.start()
-      println(s"Started Mongo running on ${network.getPort}")
+      info(s"Started Mongo running on ${network.getPort}")
     } catch {
       case t: Throwable =>
         println(s"Failed to start Mongo on attempt number $attempt")
@@ -38,7 +39,7 @@ trait EmbeddedMongo extends Scope with ComposableAround with EmbeddedMongoExecut
     try {
       super.around(r)
     } finally {
-      println("Stopping Mongo")
+      info(s"Stopping Mongo running on ${network.getPort}")
       mongodExecutable.stop()
     }
   }
