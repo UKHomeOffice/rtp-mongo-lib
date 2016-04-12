@@ -16,7 +16,7 @@ trait EmbeddedMongo extends Scope with ComposableAround with EmbeddedMongoExecut
   startMongo()
 
   def startMongo(): Unit = {
-    def startMongo(attempt: Int): Unit = try {
+    def startMongo(attempt: Int, sleepTime: Int = 2): Unit = try {
       mongodExecutable.start()
       info(s"Started Mongo running on ${network.getPort}")
     } catch {
@@ -25,8 +25,8 @@ trait EmbeddedMongo extends Scope with ComposableAround with EmbeddedMongoExecut
         val nextAttempt = attempt + 1
 
         if (nextAttempt <= 5) {
-          TimeUnit.SECONDS.sleep(2)
-          startMongo(nextAttempt)
+          TimeUnit.SECONDS.sleep(sleepTime)
+          startMongo(nextAttempt, sleepTime + 1)
         } else {
           throw new Exception("Failed to start Mongo after 5 attempts", t)
         }
