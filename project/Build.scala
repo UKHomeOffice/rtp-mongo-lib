@@ -1,12 +1,13 @@
 import io.gatling.sbt.GatlingPlugin
 import sbt.Keys._
 import sbt._
+import sbtrelease.ReleasePlugin
 import spray.revolver.RevolverPlugin._
 
 object Build extends Build {
   val moduleName = "rtp-mongo-lib"
 
-  val root = Project(id = moduleName, base = file(".")).enablePlugins(GatlingPlugin)
+  val root = Project(id = moduleName, base = file(".")).enablePlugins(GatlingPlugin, ReleasePlugin)
     .configs(IntegrationTest)
     .settings(Revolver.settings)
     .settings(Defaults.itSettings: _*)
@@ -38,8 +39,8 @@ object Build extends Build {
     )
     .settings(libraryDependencies ++= {
       val `gatling-verson` = "2.1.7"
-      val `rtp-io-lib-version` = "1.7.11"
-      val `rtp-test-lib-version` = "1.2.1"
+      val `rtp-io-lib-version` = "1.7.14"
+      val `rtp-test-lib-version` = "1.2.4"
 
       Seq(
         "com.novus" %% "salat" % "1.9.9",

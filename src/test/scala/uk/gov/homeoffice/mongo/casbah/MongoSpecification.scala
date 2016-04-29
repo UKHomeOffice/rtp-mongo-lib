@@ -5,7 +5,7 @@ import scala.util.Try
 import org.specs2.execute.{AsResult, Result}
 import org.specs2.mutable.SpecificationLike
 import org.specs2.specification.AroundEach
-import com.mongodb.casbah.{MongoClient, MongoClientURI, MongoDB}
+import com.mongodb.casbah.{MongoClientURI, MongoDB}
 import uk.gov.homeoffice.configuration.{ConfigFactorySupport, HasConfig}
 
 /**
@@ -30,7 +30,7 @@ trait MongoSpecification extends Mongo with AroundEach with HasConfig with Confi
 
   lazy val mongoClientURI = MongoClientURI(mongoConnectionUri)
 
-  lazy val mongoClient = MongoClient(mongoClientURI)
+  lazy val mongoClient = com.mongodb.casbah.MongoClient(mongoClientURI)
 
   lazy val db = mongoClient(database)
 
