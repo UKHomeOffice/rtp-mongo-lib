@@ -39,8 +39,8 @@ object Build extends Build {
     )
     .settings(libraryDependencies ++= {
       val `gatling-verson` = "2.1.7"
-      val `rtp-io-lib-version` = "1.7.14"
-      val `rtp-test-lib-version` = "1.2.4"
+      val `rtp-io-lib-version` = "1.7.16"
+      val `rtp-test-lib-version` = "1.3.1"
 
       Seq(
         "com.novus" %% "salat" % "1.9.9",
