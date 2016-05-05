@@ -11,8 +11,8 @@ import org.specs2.specification.core.Fragments
 /**
  * Mix in this trait (at specification level) to provide a connection to an embedded Mongo for testing.
  * An embedded Mongo is started for each specification and examples within a specification will be run sequentially to allow for database clearance, avoiding any test interference.
+ * If you can, it is recommended to use EmbeddedMongo instead, as it is mixed in at the example level and can aid code readability.
  */
-@deprecated(message = "Deprecated in favour of Embedded Mongo, the same idea as this trait but used at example level instead of specification", since = "8th April 2016")
 trait EmbeddedMongoSpecification extends EmbeddedMongoExecutable with EmbeddedMongoClient {
   this: SpecificationLike =>
 
