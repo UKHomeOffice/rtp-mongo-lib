@@ -1,7 +1,7 @@
 package uk.gov.homeoffice.mongo.casbah
 
 import com.mongodb.ServerAddress
-import com.mongodb.casbah.{MongoClient, MongoDB}
+import com.mongodb.casbah.MongoDB
 import org.specs2.execute.{AsResult, Result}
 import org.specs2.mutable.SpecificationLike
 import org.specs2.specification.AroundEach
@@ -18,14 +18,14 @@ trait EmbeddedMongoSpecification extends AroundEach with Mongo with EmbeddedMong
 
   lazy val database = "embedded-database"
 
-  lazy val mongoClient = MongoClient(new ServerAddress(network.getServerAddress, network.getPort))
+  lazy val mongoClient = com.mongodb.casbah.MongoClient(new ServerAddress(network.getServerAddress, network.getPort))
 
   lazy val db = mongoClient(database)
 
-  override def around[T: AsResult](t: => T): Result = try {
+  override def around[R: AsResult](r: => R): Result = try {
     debug("Starting Mongo...")
     mongodExecutable.start()
-    AsResult(t)
+    AsResult(r)
   } finally {
     debug("Stopping Mongo")
     mongodExecutable.stop()
