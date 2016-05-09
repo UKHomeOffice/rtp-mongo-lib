@@ -6,27 +6,23 @@ import com.mongodb.casbah.MongoDB
 import org.specs2.execute.{AsResult, Result}
 import org.specs2.mutable.SpecificationLike
 import org.specs2.specification.AroundEach
-import org.specs2.specification.core.Fragments
 
 /**
  * Mix in this trait (at specification level) to provide a connection to an embedded Mongo for testing.
- * An embedded Mongo is started for each specification and examples within a specification will be run sequentially to allow for database clearance, avoiding any test interference.
+ * Every running example will be given its own unique instance of Mongo.
  * If you can, it is recommended to use EmbeddedMongo instead, as it is mixed in at the example level and can aid code readability.
  */
-trait EmbeddedMongoSpecification extends EmbeddedMongoExecutable with EmbeddedMongoClient {
+trait EmbeddedMongoSpecification extends AroundEach with EmbeddedMongoExecutable with EmbeddedMongoClient {
   this: SpecificationLike =>
 
-  sequential
+  isolated
 
-  override def map(fs: => Fragments): Fragments = startMongo ^ fs ^ stopMongo
-
-  private def startMongo = step {
-    println("Starting Mongo")
+  override def around[T: AsResult](t: => T): Result = try {
+    debug("Starting Mongo...")
     mongodExecutable.start()
-  }
-
-  private def stopMongo = step {
-    println("Stopping Mongo")
+    AsResult(t)
+  } finally {
+    debug("Stopping Mongo")
     mongodExecutable.stop()
   }
 }
