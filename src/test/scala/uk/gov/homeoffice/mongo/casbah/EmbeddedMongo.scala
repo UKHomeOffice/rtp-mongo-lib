@@ -10,8 +10,9 @@ import uk.gov.homeoffice.specs2.ComposableAround
   * An embedded Mongo is started for each example.
   */
 trait EmbeddedMongo extends Scope with ComposableAround with EmbeddedMongoExecutable with Logging {
+  startMongo()
+
   override def around[R: AsResult](r: => R): Result = try {
-    startMongo()
     super.around(r)
   } finally {
     stopMongo()
