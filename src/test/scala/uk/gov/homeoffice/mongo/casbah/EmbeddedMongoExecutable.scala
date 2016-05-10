@@ -53,7 +53,7 @@ trait EmbeddedMongoExecutable extends Logging {
     def startMongo(attempt: Int, sleepTime: Int = 2): Unit = try {
       mongodExecutable.start()
       info(s"Started Mongo running on ${network.getPort}")
-      SECONDS.sleep(1)
+      waitForMongo
     } catch {
       case t: Throwable =>
         println(s"Failed to start Mongo on attempt number $attempt")
@@ -67,13 +67,23 @@ trait EmbeddedMongoExecutable extends Logging {
         }
     }
 
+    def waitForMongo: Boolean = {
+      val mongoRunning = db.command("serverStatus").ok
+
+      if (!mongoRunning) {
+        MILLISECONDS.sleep(500)
+        waitForMongo
+      }
+
+      mongoRunning
+    }
+
     startMongo(1)
   }
 
   def stopMongo(): Unit = {
     info(s"Stopping Mongo running on ${network.getPort}")
     mongodExecutable.stop()
-    SECONDS.sleep(1)
   }
 
   trait TestMongo extends Mongo {
