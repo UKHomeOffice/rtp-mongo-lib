@@ -2,7 +2,7 @@ package uk.gov.homeoffice.mongo.casbah
 
 import java.util.concurrent.TimeUnit.{MILLISECONDS, SECONDS}
 import com.mongodb.ServerAddress
-import com.mongodb.casbah.{MongoClient, MongoDB}
+import com.mongodb.casbah.MongoDB
 import de.flapdoodle.embed.mongo.config.{MongodConfigBuilder, Net, RuntimeConfigBuilder}
 import de.flapdoodle.embed.mongo.distribution.Version
 import de.flapdoodle.embed.mongo.{Command, MongodStarter}
@@ -10,9 +10,7 @@ import de.flapdoodle.embed.process.config.io.ProcessOutput
 import de.flapdoodle.embed.process.runtime.Network._
 import grizzled.slf4j.Logging
 
-trait EmbeddedMongoExecutable extends Logging {
-  executable =>
-
+trait EmbeddedMongoExecutable extends MongoClient with Logging {
   lazy val network: Net = {
     def freeServerPort: Int = {
       val port = getFreeServerPort
@@ -42,12 +40,6 @@ trait EmbeddedMongoExecutable extends Logging {
   lazy val runtime = MongodStarter.getInstance(runtimeConfig)
 
   lazy val mongodExecutable = runtime.prepare(mongodConfig)
-
-  lazy val database = "embedded-database"
-
-  lazy val mongoClient = MongoClient(new ServerAddress(network.getServerAddress, network.getPort))
-
-  lazy val db = mongoClient(database)
 
   def startMongo(): Unit = {
     def startMongo(attempt: Int, sleepTime: Int = 2): Unit = try {
@@ -85,8 +77,18 @@ trait EmbeddedMongoExecutable extends Logging {
     info(s"Stopping Mongo running on ${network.getPort}")
     mongodExecutable.stop()
   }
+}
+
+trait MongoClient extends Mongo {
+  self: EmbeddedMongoExecutable =>
+
+  lazy val database = "embedded-database"
+
+  lazy val mongoClient = com.mongodb.casbah.MongoClient(new ServerAddress(network.getServerAddress, network.getPort))
+
+  lazy val db = mongoClient(database)
 
   trait TestMongo extends Mongo {
-    lazy val db: MongoDB = executable.db
+    lazy val db: MongoDB = self.db
   }
 }
