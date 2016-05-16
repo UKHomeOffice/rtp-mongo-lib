@@ -19,6 +19,7 @@ trait MongoSpecification extends Mongo with AroundEach with HasConfig with Confi
   spec: SpecificationLike =>
 
   isolated
+  sequential
 
   val server = config.text("mongo.host", "127.0.0.1")
 

@@ -7,12 +7,12 @@ import org.specs2.specification.AroundEach
 /**
  * Mix in this trait (at specification level) to provide a connection to an embedded Mongo for testing.
  * Every running example will be given its own unique instance of Mongo.
- * If you can, it is recommended to use EmbeddedMongo instead, as it is mixed in at the example level and can aid code readability.
  */
 trait EmbeddedMongoSpecification extends AroundEach with EmbeddedMongoExecutable {
   spec: SpecificationLike =>
 
   isolated
+  sequential
 
   override def around[R: AsResult](r: => R): Result = try {
     startMongo()
