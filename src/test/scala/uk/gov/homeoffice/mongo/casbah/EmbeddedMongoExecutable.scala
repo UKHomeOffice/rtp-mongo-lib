@@ -1,5 +1,6 @@
 package uk.gov.homeoffice.mongo.casbah
 
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeUnit.{MILLISECONDS, SECONDS}
 import com.mongodb.ServerAddress
 import com.mongodb.casbah.MongoDB
@@ -76,6 +77,7 @@ trait EmbeddedMongoExecutable extends MongoClient with Logging {
   def stopMongo(): Unit = {
     info(s"Stopping Mongo running on ${network.getPort}")
     mongodExecutable.stop()
+    TimeUnit.SECONDS.sleep(2)
   }
 }
 
