@@ -38,9 +38,9 @@ trait EmbeddedMongoExecutable extends MongoClient with Logging {
     .processOutput(ProcessOutput.getDefaultInstanceSilent)
     .build()
 
-  lazy val runtime = MongodStarter.getInstance(runtimeConfig)
+  lazy val runtime = MongodStarter getInstance runtimeConfig
 
-  lazy val mongodExecutable = runtime.prepare(mongodConfig)
+  lazy val mongodExecutable = runtime prepare mongodConfig
 
   def startMongo(): Unit = {
     def startMongo(attempt: Int, sleepTime: Int = 2): Unit = try {
@@ -52,11 +52,11 @@ trait EmbeddedMongoExecutable extends MongoClient with Logging {
         println(s"Failed to start Mongo on attempt number $attempt")
         val nextAttempt = attempt + 1
 
-        if (nextAttempt <= 5) {
+        if (nextAttempt <= 10) {
           SECONDS.sleep(sleepTime)
           startMongo(nextAttempt, sleepTime + 1)
         } else {
-          throw new Exception("Failed to start Mongo after 5 attempts", t)
+          throw new Exception("Failed to start Mongo after 10 attempts", t)
         }
     }
 
@@ -64,7 +64,7 @@ trait EmbeddedMongoExecutable extends MongoClient with Logging {
       val mongoRunning = db.command("serverStatus").ok
 
       if (!mongoRunning) {
-        MILLISECONDS.sleep(500)
+        SECONDS.sleep(1)
         waitForMongo
       }
 
