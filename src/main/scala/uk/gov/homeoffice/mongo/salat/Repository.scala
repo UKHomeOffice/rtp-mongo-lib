@@ -30,7 +30,6 @@ import uk.gov.homeoffice.mongo.casbah.Mongo
   * </pre>
   */
 abstract class Repository[M <: AnyRef with Product](implicit m: Manifest[M]) extends ModelCompanion[M, ObjectId] with Mongo {
-
   com.mongodb.casbah.commons.conversions.scala.RegisterJodaTimeConversionHelpers()
 
   val collectionName: String
