@@ -1,12 +1,14 @@
 package uk.gov.homeoffice.mongo.casbah
 
-import org.bson.types.ObjectId
-import org.json4s._
-import org.json4s.native.JsonMethods._
+import com.github.limansky.mongoquery.casbah._
 import com.mongodb.DBObject
 import com.mongodb.casbah.commons.MongoDBObject
 import com.mongodb.casbah.commons.conversions.scala.{RegisterConversionHelpers, RegisterJodaTimeConversionHelpers}
 import com.mongodb.util.JSON
+import org.bson.types.ObjectId
+import org.joda.time.DateTime
+import org.json4s._
+import org.json4s.native.JsonMethods._
 
 /**
   * Mix this in for useful support to your Mongo functionality.
@@ -32,6 +34,13 @@ trait MongoSupport {
   }
 
   implicit def toJson(dbObject: DBObject)(implicit formats: Formats = DefaultFormats): JValue = parse(dbObject.toString)
+
+  def dateRangeQuery(from: Option[DateTime] = None, to: Option[DateTime] = None): Option[DBObject] = (from, to) match {
+    case (Some(f), Some(t)) => Some(mq"{ $$gte: $f, $$lte: $t }")
+    case (Some(f), None) => Some(mq"{ $$gte: $f }")
+    case (None, Some(t)) => Some(mq"{ $$lte: $t }")
+    case _ => None
+  }
 
   implicit class ObjectIdOps(_id: ObjectId) {
     def ~(j: JValue): JValue = merge(j)
