@@ -14,7 +14,7 @@ import de.flapdoodle.embed.process.runtime.Network._
 import grizzled.slf4j.Logging
 
 object EmbeddedMongoExecutable {
-  val ports = Collections.synchronizedSet(new util.HashSet[Int])
+  private val ports = Collections.synchronizedSet(new util.HashSet[Int])
 }
 
 trait EmbeddedMongoExecutable extends MongoClient with Logging {
