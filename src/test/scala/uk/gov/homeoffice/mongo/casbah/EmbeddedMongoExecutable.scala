@@ -1,5 +1,7 @@
 package uk.gov.homeoffice.mongo.casbah
 
+import java.util
+import java.util.Collections
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeUnit.{MILLISECONDS, SECONDS}
 import com.mongodb.ServerAddress
@@ -11,7 +13,13 @@ import de.flapdoodle.embed.process.config.io.ProcessOutput
 import de.flapdoodle.embed.process.runtime.Network._
 import grizzled.slf4j.Logging
 
+object EmbeddedMongoExecutable {
+  val ports = Collections.synchronizedSet(new util.HashSet[Int])
+}
+
 trait EmbeddedMongoExecutable extends MongoClient with Logging {
+  import EmbeddedMongoExecutable._
+
   lazy val network: Net = {
     def freeServerPort: Int = {
       val port = getFreeServerPort
@@ -21,7 +29,12 @@ trait EmbeddedMongoExecutable extends MongoClient with Logging {
         MILLISECONDS.sleep(10)
         freeServerPort
       } else {
-        port
+        if (ports.add(port)) {
+          println(s"Mongo ports in use: $ports")
+          port
+        } else {
+          freeServerPort
+        }
       }
     }
 
@@ -78,6 +91,7 @@ trait EmbeddedMongoExecutable extends MongoClient with Logging {
     info(s"Stopping Mongo running on ${network.getPort}")
     mongodExecutable.stop()
     TimeUnit.SECONDS.sleep(2)
+    ports.remove(network.getPort)
   }
 }
 
