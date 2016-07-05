@@ -30,7 +30,7 @@ trait EmbeddedMongoExecutable extends MongoClient with Logging {
         freeServerPort
       } else {
         if (ports.add(port)) {
-          println(s"Mongo ports in use: $ports")
+          info(s"Mongo ports in use: $ports")
           port
         } else {
           freeServerPort
