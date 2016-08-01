@@ -38,7 +38,7 @@ object Build extends Build {
       )
     )
     .settings(libraryDependencies ++= {
-      val `gatling-verson` = "2.1.7"
+      val `gatling-verson` = "2.2.0"
       val `mongoquery-version` = "0.4"
       val `rtp-io-lib-version` = "1.7.16"
       val `rtp-test-lib-version` = "1.3.1"
