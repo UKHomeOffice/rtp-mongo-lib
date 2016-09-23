@@ -1,8 +1,8 @@
 package uk.gov.homeoffice.mongo.salat
 
 import org.bson.types.ObjectId
-import com.novus.salat.Context
-import com.novus.salat.dao.{SalatDAO, ModelCompanion}
+import salat.Context
+import salat.dao.{ModelCompanion, SalatDAO}
 import uk.gov.homeoffice.mongo.casbah.Mongo
 
 /**
@@ -34,7 +34,7 @@ abstract class Repository[M <: AnyRef with Product](implicit m: Manifest[M]) ext
 
   val collectionName: String
 
-  implicit val context: Context = com.novus.salat.global.ctx
+  implicit val context: Context = salat.global.ctx
 
   lazy val dao = new SalatDAO[M, ObjectId](db(collectionName)) {}
 }
