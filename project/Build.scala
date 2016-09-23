@@ -32,7 +32,6 @@ object Build extends Build {
         "Artifactory Snapshot Realm" at "http://artifactory.registered-traveller.homeoffice.gov.uk/artifactory/libs-snapshot-local/",
         "Artifactory Release Realm" at "http://artifactory.registered-traveller.homeoffice.gov.uk/artifactory/libs-release-local/",
         "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/",
-        "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/",
         "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases",
         "Kamon Repository" at "http://repo.kamon.io"
       )
@@ -40,11 +39,13 @@ object Build extends Build {
     .settings(libraryDependencies ++= {
       val `gatling-verson` = "2.2.0"
       val `mongoquery-version` = "0.4"
+      val `salat-version` = "1.10.0"
       val `rtp-io-lib-version` = "1.7.16"
       val `rtp-test-lib-version` = "1.3.1"
 
       Seq(
-        "com.novus" %% "salat" % "1.9.9",
+        "com.github.salat" %% "salat-core" % `salat-version`,
+        "com.github.salat" %% "salat-util" % `salat-version`,
         "com.github.limansky" %% "mongoquery-casbah" % `mongoquery-version` withSources(),
         "com.github.limansky" %% "mongoquery-reactive" % `mongoquery-version` withSources(),
         "de.flapdoodle.embed" % "de.flapdoodle.embed.mongo" % "1.50.2" withSources(),
