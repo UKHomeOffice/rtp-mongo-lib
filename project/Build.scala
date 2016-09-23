@@ -39,11 +39,11 @@ object Build extends Build {
       )
     )
     .settings(libraryDependencies ++= {
-      val `gatling-verson` = "2.2.0"
+      val `gatling-verson` = "2.2.2"
       val `mongoquery-version` = "0.4"
       val `salat-version` = "1.10.0"
-      val `rtp-io-lib-version` = "1.7.16"
-      val `rtp-test-lib-version` = "1.3.1"
+      val `rtp-io-lib-version` = "1.7.20"
+      val `rtp-test-lib-version` = "1.3.4"
 
       Seq(
         "com.github.salat" %% "salat-core" % `salat-version`,
