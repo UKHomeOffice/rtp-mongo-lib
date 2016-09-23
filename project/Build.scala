@@ -32,6 +32,8 @@ object Build extends Build {
         "Artifactory Snapshot Realm" at "http://artifactory.registered-traveller.homeoffice.gov.uk/artifactory/libs-snapshot-local/",
         "Artifactory Release Realm" at "http://artifactory.registered-traveller.homeoffice.gov.uk/artifactory/libs-release-local/",
         "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/",
+        "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/",
+        "Sonatype Releases" at "https://oss.sonatype.org/content/repositories/releases/",
         "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases",
         "Kamon Repository" at "http://repo.kamon.io"
       )
