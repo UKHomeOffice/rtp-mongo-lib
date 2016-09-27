@@ -40,17 +40,20 @@ object Build extends Build {
     )
     .settings(libraryDependencies ++= {
       val `gatling-verson` = "2.2.2"
-      val `mongoquery-version` = "0.4"
+      val `casbah-version` = "2.8.2"
       val `salat-version` = "1.10.0"
+      val `mongoquery-version` = "0.4"
       val `rtp-io-lib-version` = "1.7.20"
       val `rtp-test-lib-version` = "1.3.4"
 
       Seq(
+        "org.mongodb" %% "casbah-core" % `casbah-version` withSources(),
+        "org.mongodb" %% "casbah-gridfs" % `casbah-version` withSources(),
         "com.github.salat" %% "salat-core" % `salat-version`,
         "com.github.salat" %% "salat-util" % `salat-version`,
         "com.github.limansky" %% "mongoquery-casbah" % `mongoquery-version` withSources(),
         "com.github.limansky" %% "mongoquery-reactive" % `mongoquery-version` withSources(),
-        "de.flapdoodle.embed" % "de.flapdoodle.embed.mongo" % "1.50.2" withSources(),
+        "de.flapdoodle.embed" % "de.flapdoodle.embed.mongo" % "1.50.5" withSources(),
         "uk.gov.homeoffice" %% "rtp-io-lib" % `rtp-io-lib-version` withSources(),
         "uk.gov.homeoffice" %% "rtp-test-lib" % `rtp-test-lib-version` withSources()
       ) ++ Seq(

@@ -15,6 +15,13 @@ import grizzled.slf4j.Logging
 
 object EmbeddedMongoExecutable {
   private val ports = Collections.synchronizedSet(new util.HashSet[Int])
+
+  lazy val runtimeConfig = new RuntimeConfigBuilder()
+    .defaults(Command.MongoD)
+    .processOutput(ProcessOutput.getDefaultInstanceSilent)
+    .build()
+
+  lazy val runtime = MongodStarter getInstance runtimeConfig
 }
 
 trait EmbeddedMongoExecutable extends MongoClient with Logging {
@@ -45,13 +52,6 @@ trait EmbeddedMongoExecutable extends MongoClient with Logging {
     .version(Version.Main.PRODUCTION)
     .net(network)
     .build
-
-  lazy val runtimeConfig = new RuntimeConfigBuilder()
-    .defaults(Command.MongoD)
-    .processOutput(ProcessOutput.getDefaultInstanceSilent)
-    .build()
-
-  lazy val runtime = MongodStarter getInstance runtimeConfig
 
   lazy val mongodExecutable = runtime prepare mongodConfig
 
