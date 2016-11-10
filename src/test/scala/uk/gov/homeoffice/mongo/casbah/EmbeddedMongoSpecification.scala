@@ -72,8 +72,11 @@ trait EmbeddedMongoSpecification extends MongoSpecification with Logging {
 
   override lazy val mongoDB = mongoClient(database)
 
-  trait TestMongo extends Mongo {
-    lazy val mongoDB: MongoDB = self.mongoDB
+  override def around[R: AsResult](r: => R): Result = try {
+    startMongo()
+    AsResult(r)
+  } finally {
+    stopMongo()
   }
 
   def startMongo(): Unit = {
@@ -115,10 +118,7 @@ trait EmbeddedMongoSpecification extends MongoSpecification with Logging {
     ports.remove(network.getPort)
   }
 
-  override def around[R: AsResult](r: => R): Result = try {
-    startMongo()
-    AsResult(r)
-  } finally {
-    stopMongo()
+  trait TestMongo extends Mongo {
+    lazy val mongoDB: MongoDB = self.mongoDB
   }
 }

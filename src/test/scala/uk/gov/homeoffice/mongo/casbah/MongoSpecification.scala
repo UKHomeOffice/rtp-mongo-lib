@@ -13,7 +13,7 @@ import uk.gov.homeoffice.configuration.{ConfigFactorySupport, HasConfig}
  * The functionality provided here requires Mongo to be running.
  * Every running example will be given its own unique database in Mongo - the database is created upon example execution and dropped when the example is complete.
  * By default the Mongo client managed by this trait, connects to a "default" Mongo i.e. 127.0.0.1 on port 27017 - these can be overwritten via configurations "mongo.host" and "mongo.port"
- * Note that there is an embedded mongo version of this trait, though the underlying "test" Mongo does not implement all of the Mongo API.
+ * Note that there is an embedded mongo version of this trait, EmbeddedMongoSpecification.
  */
 trait MongoSpecification extends Mongo with AroundEach with HasConfig with ConfigFactorySupport with MongoRunning {
   spec: SpecificationLike =>
@@ -25,7 +25,7 @@ trait MongoSpecification extends Mongo with AroundEach with HasConfig with Confi
 
   lazy val port = config.int("mongo.port", 27017)
 
-  lazy val database = s"test-${UUID.randomUUID()}"
+  lazy val database = s"rtp-test-${UUID.randomUUID()}"
 
   lazy val mongoConnectionUri = s"mongodb://$server:$port/$database"
 
@@ -45,11 +45,6 @@ trait MongoSpecification extends Mongo with AroundEach with HasConfig with Confi
     }
   } else {
     AsResult(skipped("*** Mongo is not running!!! ***"))
-  }
-
-  override def finalize() = {
-    closeMongo
-    super.finalize()
   }
 
   def closeMongo = {
