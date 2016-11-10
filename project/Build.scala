@@ -40,6 +40,7 @@ object Build extends Build {
     )
     .settings(libraryDependencies ++= {
       val `gatling-verson` = "2.2.2"
+      val `reactivemongo-version` = "0.10.5.0.akka23"
       val `casbah-version` = "2.8.2"
       val `salat-version` = "1.10.0"
       val `mongoquery-version` = "0.4"
@@ -47,6 +48,7 @@ object Build extends Build {
       val `rtp-test-lib-version` = "1.3.4"
 
       Seq(
+        "org.reactivemongo" %% "reactivemongo" % `reactivemongo-version` withSources(),
         "org.mongodb" %% "casbah-core" % `casbah-version` withSources(),
         "org.mongodb" %% "casbah-gridfs" % `casbah-version` withSources(),
         "com.github.salat" %% "salat-core" % `salat-version`,
