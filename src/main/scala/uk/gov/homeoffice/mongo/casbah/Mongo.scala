@@ -16,7 +16,7 @@ trait Mongo {
   * mongodb://user:homeoffice.gov.uk:27017,homeoffice.gov.uk:27017,homeoffice.gov.uk:27017/mydatabase
   */
 object Mongo {
-  val db: MongoClientURI => MongoDB =
+  val mongoDB: MongoClientURI => MongoDB =
     mongoClientURI => {
       val mongoClient = MongoClient(MongoClientURI(mongoClientURI.getURI))
 

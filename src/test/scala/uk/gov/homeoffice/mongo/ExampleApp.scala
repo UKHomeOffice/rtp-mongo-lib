@@ -23,7 +23,7 @@ trait ExampleMongo extends Mongo {
 }
 
 object ExampleMongo {
-  lazy val exampledb = Mongo.db(MongoClientURI("mongodb://localhost:27017/rtp-example"))
+  lazy val exampledb = Mongo.mongoDB(MongoClientURI("mongodb://localhost:27017/rtp-example"))
 }
 
 trait ExampleRepository extends Repository[Example] {
