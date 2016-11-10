@@ -36,5 +36,5 @@ abstract class Repository[M <: AnyRef with Product](implicit m: Manifest[M]) ext
 
   implicit val context: Context = salat.global.ctx
 
-  lazy val dao = new SalatDAO[M, ObjectId](db(collectionName)) {}
+  lazy val dao = new SalatDAO[M, ObjectId](mongoDB(collectionName)) {}
 }
