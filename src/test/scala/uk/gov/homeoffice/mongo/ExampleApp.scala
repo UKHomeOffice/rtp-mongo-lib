@@ -19,7 +19,7 @@ object ExampleApp extends App {
 }
 
 trait ExampleMongo extends Mongo {
-  lazy val db = ExampleMongo.exampledb
+  lazy val mongoDB = ExampleMongo.exampledb
 }
 
 object ExampleMongo {

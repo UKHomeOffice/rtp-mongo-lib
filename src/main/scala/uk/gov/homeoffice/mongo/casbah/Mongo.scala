@@ -3,7 +3,7 @@ package uk.gov.homeoffice.mongo.casbah
 import com.mongodb.casbah.{MongoClient, MongoClientURI, MongoDB}
 
 trait Mongo {
-  val db: MongoDB
+  val mongoDB: MongoDB
 }
 
 /**
