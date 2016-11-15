@@ -9,7 +9,7 @@ import uk.gov.homeoffice.mongo.casbah.EmbeddedMongoSpecification
 
 class RepositorySpec(implicit ev: ExecutionEnv) extends Specification with EmbeddedMongoSpecification with ReactiveMongoSpecification {
   trait Context extends Scope {
-    def usersCollection: BSONCollection = db.collection[BSONCollection]("users")
+    def usersCollection: BSONCollection = reactiveMongoDB.collection[BSONCollection]("users")
   }
 
   "Repository" should {
