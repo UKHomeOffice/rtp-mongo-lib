@@ -14,4 +14,6 @@ trait ReactiveMongoSpecification {
   lazy val driver = new MongoDriver
   lazy val connection = driver.connection(List(mongoClient.address.toString))
   lazy val db = connection.db(database)
+
+  // WIP
 }
