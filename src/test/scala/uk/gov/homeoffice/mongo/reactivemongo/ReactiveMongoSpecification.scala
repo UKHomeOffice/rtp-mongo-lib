@@ -12,10 +12,12 @@ trait ReactiveMongoSpecification extends ReactiveMongo {
   sequential
 
   lazy val driver = new MongoDriver
-  lazy val connection = driver.connection(List(mongoClient.address.toString))
-  lazy val reactiveMongoDB = connection.db(database)
+
+  def connection = driver.connection(List(mongoClient.address.toString))
+
+  def reactiveMongoDB = connection.db(database)
 
   trait TestReactiveMongo extends ReactiveMongo {
-    lazy val reactiveMongoDB: DefaultDB = spec.reactiveMongoDB
+    def reactiveMongoDB: DefaultDB = spec.reactiveMongoDB
   }
 }
