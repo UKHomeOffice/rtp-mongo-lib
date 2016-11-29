@@ -37,17 +37,19 @@ trait MongoSpecification extends Mongo with AroundEach with HasConfig with Confi
 
   override def around[T: AsResult](t: => T): Result = if (mongoRunning) {
     try {
-      debug(s"+ Created $database in spec $getClass")
+      debug(s"Created $database in spec $getClass")
       AsResult(t)
     } finally {
-      debug(s"x Dropping $database")
-      closeMongo
+      debug(s"Dropping $database")
+      downMongo
     }
   } else {
     AsResult(skipped("*** Mongo is not running!!! ***"))
   }
 
-  def closeMongo = {
+  def upMongo(): Unit = ()
+
+  def downMongo(): Unit = {
     Try { mongoClient.dropDatabase(database) }
     Try { mongoClient.close() }
   }
