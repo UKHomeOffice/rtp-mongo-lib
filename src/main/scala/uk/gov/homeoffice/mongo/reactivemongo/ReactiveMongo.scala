@@ -1,7 +1,7 @@
 package uk.gov.homeoffice.mongo.reactivemongo
 
-import reactivemongo.api.DefaultDB
+import reactivemongo.api.DB
 
 trait ReactiveMongo {
-  def reactiveMongoDB: DefaultDB
+  def reactiveMongoDB: DB
 }

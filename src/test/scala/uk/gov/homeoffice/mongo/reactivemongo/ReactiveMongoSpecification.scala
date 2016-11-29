@@ -1,8 +1,9 @@
 package uk.gov.homeoffice.mongo.reactivemongo
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import org.specs2.mock.Mockito
 import org.specs2.mutable.SpecificationLike
-import reactivemongo.api.{DefaultDB, MongoDriver}
+import reactivemongo.api.{DB, MongoDriver}
 import uk.gov.homeoffice.mongo.casbah.MongoSpecification
 
 trait ReactiveMongoSpecification extends ReactiveMongo {
@@ -15,9 +16,13 @@ trait ReactiveMongoSpecification extends ReactiveMongo {
 
   def connection = driver.connection(List(mongoClient.address.toString))
 
-  def reactiveMongoDB = connection.db(database)
+  def reactiveMongoDB: DB = connection.db(database)
 
   trait TestReactiveMongo extends ReactiveMongo {
-    def reactiveMongoDB: DefaultDB = spec.reactiveMongoDB
+    def reactiveMongoDB: DB = spec.reactiveMongoDB
   }
+}
+
+trait MockReactiveMongo extends ReactiveMongo with Mockito {
+  def reactiveMongoDB: DB = mock[DB]
 }

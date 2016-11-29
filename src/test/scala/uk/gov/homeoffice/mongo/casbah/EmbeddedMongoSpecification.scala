@@ -73,13 +73,13 @@ trait EmbeddedMongoSpecification extends MongoSpecification with Logging {
   override lazy val mongoDB = mongoClient(database)
 
   override def around[R: AsResult](r: => R): Result = try {
-    startMongo()
+    upMongo()
     AsResult(r)
   } finally {
-    stopMongo()
+    downMongo()
   }
 
-  def startMongo(): Unit = {
+  override def upMongo(): Unit = {
     def startMongo(attempt: Int, sleepTime: Int = 2): Unit = try {
       mongodExecutable.start()
       info(s"Started Mongo running on ${network.getPort}")
@@ -111,7 +111,7 @@ trait EmbeddedMongoSpecification extends MongoSpecification with Logging {
     startMongo(1)
   }
 
-  def stopMongo(): Unit = {
+  override def downMongo(): Unit = {
     info(s"Stopping Mongo running on ${network.getPort}")
     mongodExecutable.stop()
     TimeUnit.SECONDS.sleep(2)
