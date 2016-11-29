@@ -38,6 +38,7 @@ trait MongoSpecification extends Mongo with AroundEach with HasConfig with Confi
   override def around[T: AsResult](t: => T): Result = if (mongoRunning) {
     try {
       debug(s"Created $database in spec $getClass")
+      upMongo()
       AsResult(t)
     } finally {
       debug(s"Dropping $database")
