@@ -41,7 +41,7 @@ trait MongoSpecification extends Mongo with AroundEach with HasConfig with Confi
       AsResult(t)
     } finally {
       debug(s"Dropping $database")
-      downMongo
+      downMongo()
     }
   } else {
     AsResult(skipped("*** Mongo is not running!!! ***"))
