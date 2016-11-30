@@ -1,9 +1,12 @@
 package uk.gov.homeoffice.mongo.reactivemongo
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.reflect.ClassTag
+import org.mockito.Answers._
+import org.mockito.Mockito.withSettings
 import org.specs2.mock.Mockito
 import org.specs2.mutable.SpecificationLike
-import reactivemongo.api.{DB, MongoDriver}
+import reactivemongo.api._
 import uk.gov.homeoffice.mongo.casbah.MongoSpecification
 
 trait ReactiveMongoSpecification extends ReactiveMongo {
@@ -16,13 +19,15 @@ trait ReactiveMongoSpecification extends ReactiveMongo {
 
   def connection = driver.connection(List(mongoClient.address.toString))
 
-  def reactiveMongoDB: DB = connection.db(database)
+  def reactiveMongoDB: DB with DBMetaCommands = connection.db(database)
 
   trait TestReactiveMongo extends ReactiveMongo {
-    def reactiveMongoDB: DB = spec.reactiveMongoDB
+    def reactiveMongoDB: DB with DBMetaCommands = spec.reactiveMongoDB
   }
 }
 
 trait MockReactiveMongo extends ReactiveMongo with Mockito {
-  def reactiveMongoDB: DB = mock[DB]
+  override def reactiveMongoDB: DB with DBMetaCommands = mock[DB with DBMetaCommands]
+
+  def mockCollection[C <: Collection : ClassTag]: C = mock[C](withSettings.defaultAnswer(RETURNS_DEEP_STUBS.get))
 }
