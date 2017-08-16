@@ -40,12 +40,12 @@ object Build extends Build {
     )
     .settings(libraryDependencies ++= {
       val `gatling-verson` = "2.2.2"
-      val `reactivemongo-version` = "0.10.5.0.akka23"
+      val `reactivemongo-version` = "0.12.4"
       val `casbah-version` = "2.8.2"
       val `salat-version` = "1.10.0"
       val `mongoquery-version` = "0.4"
-      val `rtp-io-lib-version` = "1.7.20"
-      val `rtp-test-lib-version` = "1.3.4"
+      val `rtp-io-lib-version` = "1.9.9"
+      val `rtp-test-lib-version` = "1.4.2"
 
       Seq(
         "org.reactivemongo" %% "reactivemongo" % `reactivemongo-version` withSources(),
