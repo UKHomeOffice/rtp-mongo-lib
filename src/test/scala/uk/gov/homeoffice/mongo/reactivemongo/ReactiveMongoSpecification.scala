@@ -2,6 +2,7 @@ package uk.gov.homeoffice.mongo.reactivemongo
 
 import java.util.concurrent.TimeUnit
 
+import grizzled.slf4j.Logging
 import org.mockito.Answers._
 import org.mockito.Mockito.withSettings
 import org.specs2.mock.Mockito
@@ -14,7 +15,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.FiniteDuration
 import scala.reflect.ClassTag
 
-trait ReactiveMongoSpecification extends ReactiveMongo {
+trait ReactiveMongoSpecification extends ReactiveMongo with Logging {
   spec: SpecificationLike with MongoSpecification =>
 
   isolated
@@ -27,8 +28,8 @@ trait ReactiveMongoSpecification extends ReactiveMongo {
   def reactiveMongoDB: DB with DBMetaCommands = Await.result(connection.database(database), FiniteDuration(5, TimeUnit.SECONDS))
 
   override def downMongo(): Unit = {
+    info(s"Stopping ReactiveMongo")
     connection.close()
-    spec.downMongo()
   }
 
   trait TestReactiveMongo extends ReactiveMongo {
