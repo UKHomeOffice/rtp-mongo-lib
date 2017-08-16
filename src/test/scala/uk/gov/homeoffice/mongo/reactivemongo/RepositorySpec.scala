@@ -3,7 +3,7 @@ package uk.gov.homeoffice.mongo.reactivemongo
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.matcher.Scope
 import org.specs2.mutable.Specification
-import reactivemongo.api.collections.default.BSONCollection
+import reactivemongo.api.collections.bson.BSONCollection
 import reactivemongo.bson.BSONDocument
 import uk.gov.homeoffice.mongo.casbah.EmbeddedMongoSpecification
 
@@ -20,7 +20,7 @@ class RepositorySpec(implicit ev: ExecutionEnv) extends Specification with Embed
     }
 
     "save and find 1 test" in new Context {
-      usersCollection.save(BSONDocument("test" -> "testing")).flatMap { _ =>
+      usersCollection.insert(BSONDocument("test" -> "testing")).flatMap { _ =>
         usersCollection.find(BSONDocument()).one[BSONDocument]
       } must beLike[Option[BSONDocument]] {
         case Some(_) => ok
