@@ -44,8 +44,8 @@ object Build extends Build {
       val `casbah-version` = "2.8.2"
       val `salat-version` = "1.10.0"
       val `mongoquery-version` = "0.4"
-      val `rtp-io-lib-version` = "1.9.9"
-      val `rtp-test-lib-version` = "1.4.2"
+      val `rtp-io-lib-version` = "1.9.10"
+      val `rtp-test-lib-version` = "1.4.3"
 
       Seq(
         "org.reactivemongo" %% "reactivemongo" % `reactivemongo-version` withSources(),

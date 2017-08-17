@@ -27,11 +27,6 @@ trait ReactiveMongoSpecification extends ReactiveMongo with Logging {
 
   def reactiveMongoDB: DB with DBMetaCommands = Await.result(connection.database(database), FiniteDuration(5, TimeUnit.SECONDS))
 
-  override def downMongo(): Unit = {
-    info(s"Stopping ReactiveMongo")
-    connection.close()
-  }
-
   trait TestReactiveMongo extends ReactiveMongo {
     def reactiveMongoDB: DB with DBMetaCommands = spec.reactiveMongoDB
   }
