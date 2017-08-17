@@ -10,6 +10,8 @@ import uk.gov.homeoffice.mongo.casbah.EmbeddedMongoSpecification
 class RepositorySpec(implicit ev: ExecutionEnv) extends Specification with EmbeddedMongoSpecification with ReactiveMongoSpecification {
   trait Context extends Scope {
     def usersCollection: BSONCollection = reactiveMongoDB.collection[BSONCollection]("users")
+    //below fix for: https://stackoverflow.com/questions/36290935/classcastexception-interface-akka-actor-scheduler-is-not-assignable-from-class
+    Thread.currentThread.setContextClassLoader(this.getClass.getClassLoader)
   }
 
   "Repository" should {
