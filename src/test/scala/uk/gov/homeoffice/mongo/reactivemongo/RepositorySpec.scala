@@ -22,7 +22,7 @@ class RepositorySpec(implicit ev: ExecutionEnv) extends Specification with Embed
     }
 
     "save and find 1 test" in new Context {
-      usersCollection.insert(BSONDocument("test" -> "testing")).flatMap { _ =>
+      usersCollection.save(BSONDocument("test" -> "testing")).flatMap { _ =>
         usersCollection.find(BSONDocument()).one[BSONDocument]
       } must beLike[Option[BSONDocument]] {
         case Some(_) => ok
