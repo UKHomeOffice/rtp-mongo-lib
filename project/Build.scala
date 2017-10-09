@@ -40,7 +40,7 @@ object Build extends Build {
     )
     .settings(libraryDependencies ++= {
       val `gatling-verson` = "2.2.2"
-      val `reactivemongo-version` = "0.11.9"
+      val `reactivemongo-version` = "0.10.5.0.akka23"
       val `casbah-version` = "3.1.1"
       val `salat-version` = "1.11.2"
       val `mongoquery-version` = "0.5"

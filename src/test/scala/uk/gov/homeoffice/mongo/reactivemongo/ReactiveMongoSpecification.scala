@@ -25,7 +25,7 @@ trait ReactiveMongoSpecification extends ReactiveMongo with Logging {
 
   def connection = driver.connection(List(mongoClient.address.toString))
 
-  def reactiveMongoDB: DB with DBMetaCommands = Await.result(connection.database(database), FiniteDuration(5, TimeUnit.SECONDS))
+  def reactiveMongoDB: DB with DBMetaCommands = connection.db(database)
 
   trait TestReactiveMongo extends ReactiveMongo {
     def reactiveMongoDB: DB with DBMetaCommands = spec.reactiveMongoDB

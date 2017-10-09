@@ -3,7 +3,7 @@ package uk.gov.homeoffice.mongo.reactivemongo
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.matcher.Scope
 import org.specs2.mutable.Specification
-import reactivemongo.api.collections.bson.BSONCollection
+import reactivemongo.api.collections.default.BSONCollection
 import reactivemongo.bson.BSONDocument
 import uk.gov.homeoffice.mongo.casbah.EmbeddedMongoSpecification
 
