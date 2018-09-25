@@ -101,7 +101,7 @@ trait EmbeddedMongoSpecification extends MongoSpecification with Logging {
       val mongoRunning = mongoDB.command("serverStatus").ok
 
       if (!mongoRunning) {
-        SECONDS.sleep(1)
+        SECONDS.sleep(3)
         waitForMongo
       }
 
