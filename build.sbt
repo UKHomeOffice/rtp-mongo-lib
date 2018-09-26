@@ -33,7 +33,7 @@ libraryDependencies ++= Seq(
   "com.github.salat" %% "salat-util" % `salat-version`,
   "com.github.limansky" %% "mongoquery-casbah" % `mongoquery-version` withSources(),
   "com.github.limansky" %% "mongoquery-reactive" % `mongoquery-version` withSources(),
-  "de.flapdoodle.embed" % "de.flapdoodle.embed.mongo" % "2.0.1" withSources(),
+  "de.flapdoodle.embed" % "de.flapdoodle.embed.mongo" % "1.50.5" withSources(),
   "uk.gov.homeoffice" %% "rtp-io-lib" % "1.9.11-SNAPSHOT",
   "uk.gov.homeoffice" %% "rtp-test-lib" % `rtp-test-lib-version` withSources()
 )
