@@ -23,7 +23,7 @@ val `reactivemongo-version` = "0.13.0"
 val `casbah-version` = "3.1.1"
 val `salat-version` = "1.11.2"
 val `mongoquery-version` = "0.6"
-val `rtp-test-lib-version` = "1.4.4-SNAPSHOT"
+val `rtp-test-lib-version` = "1.4.5"
 
 libraryDependencies ++= Seq(
   "org.reactivemongo" %% "reactivemongo" % `reactivemongo-version` withSources(),
@@ -34,7 +34,7 @@ libraryDependencies ++= Seq(
   "com.github.limansky" %% "mongoquery-casbah" % `mongoquery-version` withSources(),
   "com.github.limansky" %% "mongoquery-reactive" % `mongoquery-version` withSources(),
   "de.flapdoodle.embed" % "de.flapdoodle.embed.mongo" % "1.50.5" withSources(),
-  "uk.gov.homeoffice" %% "rtp-io-lib" % "1.9.11-SNAPSHOT",
+  "uk.gov.homeoffice" %% "rtp-io-lib" % "1.9.12",
   "uk.gov.homeoffice" %% "rtp-test-lib" % `rtp-test-lib-version` withSources()
 )
 
