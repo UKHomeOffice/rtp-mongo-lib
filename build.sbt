@@ -23,7 +23,7 @@ val `reactivemongo-version` = "0.13.0"
 val `casbah-version` = "3.1.1"
 val `salat-version` = "1.11.2"
 val `mongoquery-version` = "0.6"
-val `rtp-test-lib-version` = "1.4.5"
+val `rtp-test-lib-version` = "1.4.8"
 
 libraryDependencies ++= Seq(
   "org.reactivemongo" %% "reactivemongo" % `reactivemongo-version` withSources(),
