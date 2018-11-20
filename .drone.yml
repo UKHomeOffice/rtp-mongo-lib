@@ -4,9 +4,8 @@ matrix:
     - dps-drone-cache
 
 pipeline:
-
   drone_s3_cache_pull:
-    image: quay.io/ukhomeofficedigital/drone-s3cache:88c6b7fbafb2702cb2da6ebd1fa8dd61309a0b18
+    image: quay.io/ukhomeofficedigital/drone-s3cache:v0.2.0
     drone_s3_cache_mode: "pull"
     secrets:
       - DRONE_S3_CACHE_AWS_ACCESS_KEY_ID
@@ -27,7 +26,7 @@ pipeline:
       event: push
 
   drone_s3_cache_push:
-    image: quay.io/ukhomeofficedigital/drone-s3cache:88c6b7fbafb2702cb2da6ebd1fa8dd61309a0b18
+    image: quay.io/ukhomeofficedigital/drone-s3cache:v0.2.0
     drone_s3_cache_folders: .ivy2
     drone_s3_cache_mode: "push"
     secrets:
