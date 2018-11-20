@@ -1,6 +1,19 @@
 ---
+matrix:
+  DRONE_S3_CACHE_BUCKET_NAME:
+    - dps-drone-cache
 
 pipeline:
+
+  drone_s3_cache_pull:
+    image: quay.io/ukhomeofficedigital/drone-s3cache:88c6b7fbafb2702cb2da6ebd1fa8dd61309a0b18
+    drone_s3_cache_mode: "pull"
+    secrets:
+      - DRONE_S3_CACHE_AWS_ACCESS_KEY_ID
+      - DRONE_S3_CACHE_AWS_SECRET_ACCESS_KEY
+    when:
+      event: push
+
   build:
     commands:
       - /root/entrypoint.sh
@@ -10,6 +23,16 @@ pipeline:
       - ARTIFACTORY_USERNAME=regt-build-bot
     secrets:
       - ARTIFACTORY_PASSWORD
+    when:
+      event: push
+
+  drone_s3_cache_push:
+    image: quay.io/ukhomeofficedigital/drone-s3cache:88c6b7fbafb2702cb2da6ebd1fa8dd61309a0b18
+    drone_s3_cache_folders: .ivy2
+    drone_s3_cache_mode: "push"
+    secrets:
+      - DRONE_S3_CACHE_AWS_ACCESS_KEY_ID
+      - DRONE_S3_CACHE_AWS_SECRET_ACCESS_KEY
     when:
       event: push
 
