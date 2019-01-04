@@ -11,11 +11,14 @@ pipeline:
       - DRONE_S3_CACHE_AWS_ACCESS_KEY_ID
       - DRONE_S3_CACHE_AWS_SECRET_ACCESS_KEY
     when:
-      event: push
+      event:
+        - push
+        - tag
 
   build:
     commands:
       - /root/entrypoint.sh
+      - git fetch --tags
       - sbt clean test
     image: quay.io/ukhomeofficedigital/scala-sbt:v0.3.1
     environment:
@@ -23,7 +26,9 @@ pipeline:
     secrets:
       - ARTIFACTORY_PASSWORD
     when:
-      event: push
+      event:
+        - push
+        - tag
 
   drone_s3_cache_push:
     image: quay.io/ukhomeofficedigital/drone-s3cache:v0.2.0
@@ -33,12 +38,14 @@ pipeline:
       - DRONE_S3_CACHE_AWS_ACCESS_KEY_ID
       - DRONE_S3_CACHE_AWS_SECRET_ACCESS_KEY
     when:
-      event: push
+      event:
+        - push
+        - tag
 
   publish:
     commands:
       - /root/entrypoint.sh
-      - sbt '+ publish'
+      - sbt +publish
     image: quay.io/ukhomeofficedigital/scala-sbt:v0.3.1
     environment:
       - ARTIFACTORY_SERVER=https://artifactory.digital.homeoffice.gov.uk/
@@ -46,18 +53,7 @@ pipeline:
     secrets:
       - ARTIFACTORY_PASSWORD
     when:
-      event: push
+      event:
+        - push
+        - tag
       branch: master
-
-  publish_tag:
-    commands:
-      - /root/entrypoint.sh
-      - sbt "set version := \"$${DRONE_TAG}\"" '+ publish'
-    image: quay.io/ukhomeofficedigital/scala-sbt:v0.3.1
-    environment:
-      - ARTIFACTORY_SERVER=https://artifactory.digital.homeoffice.gov.uk/
-      - ARTIFACTORY_USERNAME=regt-build-bot
-    secrets:
-      - ARTIFACTORY_PASSWORD
-    when:
-      event: tag
