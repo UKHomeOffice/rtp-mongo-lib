@@ -72,5 +72,6 @@ steps:
     event:
     - push
     - tag
-
+  depends_on:
+    - build
 ...
