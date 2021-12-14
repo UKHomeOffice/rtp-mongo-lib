@@ -13,20 +13,18 @@ val root = Project(id = "rtp-mongo-lib", base = file("."))
 credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 
 resolvers ++= Seq(
-  "Artifactory Snapshot Realm" at "http://artifactory.registered-traveller.homeoffice.gov.uk/artifactory/libs-snapshot-local/",
-  "Artifactory Release Realm" at "http://artifactory.registered-traveller.homeoffice.gov.uk/artifactory/libs-release-local/",
-  "Artifactory External Release Local Realm" at "http://artifactory.registered-traveller.homeoffice.gov.uk/artifactory/ext-release-local/"
+  "ACPArtifactory Lib Snapshot" at "https://artifactory.digital.homeoffice.gov.uk/artifactory/libs-snapshot-local/",
+  "ACPArtifactory Lib Release" at "https://artifactory.digital.homeoffice.gov.uk/artifactory/libs-release-local/",
+  "ACPArtifactory Ext Release" at "https://artifactory.digital.homeoffice.gov.uk/artifactory/ext-release-local/"
 )
 
 val `gatling-verson` = "2.2.2"
-val `reactivemongo-version` = "0.13.0"
 val `casbah-version` = "3.1.1"
 val `salat-version` = "1.11.2"
 val `mongoquery-version` = "0.6"
 val `rtp-test-lib-version` = "1.6.6-g6f56307"
 
 libraryDependencies ++= Seq(
-  "org.reactivemongo" %% "reactivemongo" % `reactivemongo-version` withSources(),
   "org.mongodb" %% "casbah-core" % `casbah-version` withSources(),
   "org.mongodb" %% "casbah-gridfs" % `casbah-version` withSources(),
   "com.github.salat" %% "salat-core" % `salat-version`,
