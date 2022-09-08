@@ -21,7 +21,6 @@ resolvers ++= Seq(
 val `gatling-verson` = "2.2.2"
 val `casbah-version` = "3.1.1"
 val `salat-version` = "1.11.2"
-val `mongoquery-version` = "0.6"
 val `rtp-test-lib-version` = "1.6.6-g6f56307"
 
 libraryDependencies ++= Seq(
@@ -29,9 +28,6 @@ libraryDependencies ++= Seq(
   "org.mongodb" %% "casbah-gridfs" % `casbah-version` withSources(),
   "com.github.salat" %% "salat-core" % `salat-version`,
   "com.github.salat" %% "salat-util" % `salat-version`,
-  "com.github.limansky" %% "mongoquery-casbah" % `mongoquery-version` withSources(),
-  "com.github.limansky" %% "mongoquery-reactive" % `mongoquery-version` withSources(),
-  "de.flapdoodle.embed" % "de.flapdoodle.embed.mongo" % "1.50.5" withSources(),
   "uk.gov.homeoffice" %% "rtp-io-lib" % "2.2.0",
   "uk.gov.homeoffice" %% "rtp-test-lib" % `rtp-test-lib-version` withSources()
 )
