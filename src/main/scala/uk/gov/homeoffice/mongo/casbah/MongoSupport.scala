@@ -1,6 +1,5 @@
 package uk.gov.homeoffice.mongo.casbah
 
-import com.github.limansky.mongoquery.casbah._
 import com.mongodb.DBObject
 import com.mongodb.casbah.commons.MongoDBObject
 import com.mongodb.casbah.commons.conversions.scala.{RegisterConversionHelpers, RegisterJodaTimeConversionHelpers}
@@ -36,9 +35,9 @@ trait MongoSupport {
   implicit def toJson(dbObject: DBObject)(implicit formats: Formats = DefaultFormats): JValue = parse(dbObject.toString)
 
   def dateRangeQuery(from: Option[DateTime] = None, to: Option[DateTime] = None): Option[DBObject] = (from, to) match {
-    case (Some(f), Some(t)) => Some(mq"{ $$gte: $f, $$lte: $t }")
-    case (Some(f), None) => Some(mq"{ $$gte: $f }")
-    case (None, Some(t)) => Some(mq"{ $$lte: $t }")
+    case (Some(f), Some(t)) => Some(MongoDBObject("$gte" -> f, "$lte" -> t))
+    case (Some(f), None) => Some(MongoDBObject("$gte" -> f))
+    case (None, Some(t)) => Some(MongoDBObject("$lte" -> t))
     case _ => None
   }
 
