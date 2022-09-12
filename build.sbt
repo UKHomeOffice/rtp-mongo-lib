@@ -21,14 +21,15 @@ resolvers ++= Seq(
 val `gatling-verson` = "2.2.2"
 val `casbah-version` = "3.1.1"
 val `salat-version` = "1.11.2"
-val `rtp-test-lib-version` = "1.6.16-gd1b3f74"
+val `rtp-test-lib-version` = "1.6.18-g13a878a"
 
 libraryDependencies ++= Seq(
+  "ch.qos.logback" % "logback-classic" % "1.4.0",
   "org.mongodb" %% "casbah-core" % `casbah-version` withSources(),
   "org.mongodb" %% "casbah-gridfs" % `casbah-version` withSources(),
   "com.github.salat" %% "salat-core" % `salat-version`,
   "com.github.salat" %% "salat-util" % `salat-version`,
-  "uk.gov.homeoffice" %% "rtp-io-lib" % "2.2.8-g1113a3c",
+  "uk.gov.homeoffice" %% "rtp-io-lib" % "2.2.10-gf9bc91d",
   "uk.gov.homeoffice" %% "rtp-test-lib" % `rtp-test-lib-version` withSources()
 )
 
