@@ -6,8 +6,8 @@ val root = Project(id = "rtp-mongo-lib", base = file("."))
   .settings(
     name := "rtp-mongo-lib",
     organization := "uk.gov.homeoffice",
-    scalaVersion := "2.12.6",
-    crossScalaVersions := Seq("2.11.8", "2.12.6")
+    scalaVersion := "2.12.16",
+    crossScalaVersions := Seq("2.12.16")
   )
 
 credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
@@ -18,23 +18,27 @@ resolvers ++= Seq(
   "ACPArtifactory Ext Release" at "https://artifactory.digital.homeoffice.gov.uk/artifactory/ext-release-local/"
 )
 
-val `gatling-verson` = "2.2.2"
-val `casbah-version` = "3.1.1"
-val `salat-version` = "1.11.2"
-val `rtp-test-lib-version` = "1.6.18-g13a878a"
+val json4sVersion = "3.6.12"
 
 libraryDependencies ++= Seq(
-  "ch.qos.logback" % "logback-classic" % "1.4.0",
-  "org.mongodb" %% "casbah-core" % `casbah-version` withSources(),
-  "org.mongodb" %% "casbah-gridfs" % `casbah-version` withSources(),
-  "com.github.salat" %% "salat-core" % `salat-version`,
-  "com.github.salat" %% "salat-util" % `salat-version`,
-  "uk.gov.homeoffice" %% "rtp-io-lib" % "2.2.10-gf9bc91d",
-  "uk.gov.homeoffice" %% "rtp-test-lib" % `rtp-test-lib-version` withSources()
+  "ch.qos.logback" % "logback-classic" % "1.4.14",
+  "org.mongodb" %% "casbah-core" % "3.1.1" withSources(),
+  "org.mongodb" %% "casbah-gridfs" % "3.1.1" withSources(),
+  "com.github.salat" %% "salat-core" % "1.11.2",
+  "com.github.salat" %% "salat-util" % "1.11.2",
+
+  "org.json4s" %% "json4s-core" % json4sVersion,
+  "org.json4s" %% "json4s-native" % json4sVersion,
+  "org.json4s" %% "json4s-jackson" % json4sVersion,
+  "org.json4s" %% "json4s-ext" % json4sVersion,
+  "org.json4s" %% "json4s-mongo" % json4sVersion,
+
+  "uk.gov.homeoffice" %% "rtp-io-lib" % "2.2.22-ga39707a" excludeAll ExclusionRule(organization = "org.json4s"),
+  "uk.gov.homeoffice" %% "rtp-test-lib" % "1.6.22-gacd233d"
 )
 
 publishTo := {
-  val artifactory = sys.env.get("ARTIFACTORY_SERVER").getOrElse("http://artifactory.registered-traveller.homeoffice.gov.uk/")
+  val artifactory = sys.env.get("ARTIFACTORY_SERVER").getOrElse("https://artifactory.registered-traveller.homeoffice.gov.uk/")
   Some("release"  at artifactory + "artifactory/libs-release-local")
 }
 
