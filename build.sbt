@@ -33,7 +33,7 @@ libraryDependencies ++= Seq(
   "org.json4s" %% "json4s-ext" % json4sVersion,
   "org.json4s" %% "json4s-mongo" % json4sVersion,
 
-  "uk.gov.homeoffice" %% "rtp-io-lib" % "2.2.22-ga39707a" excludeAll ExclusionRule(organization = "org.json4s"),
+  "uk.gov.homeoffice" %% "rtp-io-lib" % "2.2.23-g127d510",
   "uk.gov.homeoffice" %% "rtp-test-lib" % "1.6.22-gacd233d"
 )
 
