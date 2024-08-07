@@ -29,6 +29,16 @@ abstract class MongoObjectRepository[A](_mongoJsonRepository :MongoJsonRepositor
     }
   }
 
+  def save(a :A) :IO[MongoResult[A]] = {
+    objectToJson(a) match {
+      case Left(mongoError) => IO(Left(mongoError))
+      case Right(json) => mongoJsonRepository.save(json).map {
+        case Left(mongoError) => Left(mongoError)
+        case Right(json) => Right(a)
+      }
+    }
+  }
+
   def findOne(filter :Json) :IO[MongoResult[Option[A]]] = {
     mongoJsonRepository.findOne(filter).flatMap {
       case Left(mongoError) => IO(Left(mongoError))

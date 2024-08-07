@@ -22,7 +22,7 @@ val root = Project(id = "rtp-mongo-lib", base = file("."))
 
       // cats effect and streaming support
       "org.typelevel" %% "cats-effect" % "3.5.4",
-      "co.fs2" %% "fs2-core" % "3.10.2",
+      "co.fs2" %% "fs2-core" % "3.10.2"
 
     ),
     addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3"),

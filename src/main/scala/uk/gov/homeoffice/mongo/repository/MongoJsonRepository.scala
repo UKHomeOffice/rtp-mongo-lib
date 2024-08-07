@@ -21,10 +21,23 @@ class MongoJsonRepository(_mongoStreamRepository :MongoStreamRepository) {
 
   val mongoStreamRepository :MongoStreamRepository = _mongoStreamRepository
 
-  def jsonToDocument(json :Json) :MongoResult[Document] = Try(Document(json.spaces4)).toEither.left.map(exc => MongoError(exc.getMessage()))
-  def documentToJson(document :Document) :MongoResult[Json] = parse(document.toJson).left.map(exc => MongoError(exc.getMessage()))
+  def jsonToDocument(json :Json) :MongoResult[Document] =
+    Try(Document(json.deepDropNullValues.spaces4)).toEither.left.map(exc => MongoError(exc.getMessage()))
+
+  def documentToJson(document :Document) :MongoResult[Json] = {
+    val jsonWriterSettings = JsonWriterSettings.builder().outputMode(JsonMode.EXTENDED).build()
+    parse(document.toJson(jsonWriterSettings)).left.map(exc => MongoError(exc.getMessage()))
+  }
+
   def resultToJson(result :InsertOneResult) :Json = Json.obj(
     "getInsertedId" -> Json.fromString(result.getInsertedId().toString),
+    "wasAcknowledged" -> Json.fromBoolean(result.wasAcknowledged)
+  )
+
+  def resultToJson(result :UpdateResult) :Json = Json.obj(
+    "getUpsertedId" -> Json.fromString(Option(result.getUpsertedId()).map(_.toString).getOrElse("")),
+    "getMatchedCount" -> Json.fromLong(result.getMatchedCount()),
+    "getModifiedCount" -> Json.fromLong(result.getModifiedCount()),
     "wasAcknowledged" -> Json.fromBoolean(result.wasAcknowledged)
   )
 
@@ -34,6 +47,16 @@ class MongoJsonRepository(_mongoStreamRepository :MongoStreamRepository) {
       case Right(document) => mongoStreamRepository.insertOne(document).flatMap {
         case Left(mongoError) => IO(Left(mongoError))
         case Right(insertOneResult) => IO(Right(resultToJson(insertOneResult)))
+      }
+    }
+  }
+
+  def save(json :Json) :IO[MongoResult[Json]] = {
+    jsonToDocument(json) match {
+      case Left(mongoError) => IO(Left(mongoError))
+      case Right(document) => mongoStreamRepository.save(document).flatMap {
+        case Left(mongoError) => IO(Left(mongoError))
+        case Right(updateOneResult) => IO(Right(resultToJson(updateOneResult)))
       }
     }
   }
@@ -69,4 +92,19 @@ class MongoJsonRepository(_mongoStreamRepository :MongoStreamRepository) {
     }
   }
 
+  def aggregate(json :List[Json]) :fs2.Stream[IO, MongoResult[Json]] = {
+    val jsonInputs :List[MongoResult[Document]] = json.map(jsonToDocument)
+    jsonInputs.exists(_.isLeft) match {
+      case true =>
+        val jsonErrors :List[MongoResult[Json]] = jsonInputs.collect { case Left(mongoError) => Left(mongoError) :MongoResult[Json] }
+        fs2.Stream.fromIterator[IO](jsonErrors.iterator, 512)
+      case false =>
+        val documents = jsonInputs.collect { case Right(document) => document }
+
+        mongoStreamRepository.aggregate(documents).map {
+          case Left(mongoError) => Left(mongoError)
+          case Right(document) => documentToJson(document)
+        }
+    }
+  }
 }

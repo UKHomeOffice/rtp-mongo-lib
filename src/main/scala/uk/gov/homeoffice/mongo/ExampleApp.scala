@@ -19,6 +19,12 @@ object ExampleApp extends App {
     "example"
   )
 
+  /*
+   *
+   * Example: Basic database operations with fs2 streaming support
+   *
+  */
+
   // Write a record into the database (remember waiting on the future is important)
   scala.concurrent.Await.result(globalDatabaseConnection.mongoCollection("exampleLogins").insertOne(Document(
     "hello" -> true
@@ -33,6 +39,12 @@ object ExampleApp extends App {
   val miceAndMen = basicBookRepository.find(Document("title" -> "Mice and Men")).compile.toList.unsafeRunSync()
   println(s"Search for one book: ${miceAndMen}")
 
+  /*
+   *
+   * Example: using a repository with circe based conversion between types
+   *
+  */
+
   // bind some class to a repository to gain access to automatic conversion
   import io.circe._
   import io.circe.parser._
@@ -43,7 +55,7 @@ object ExampleApp extends App {
 
   def bookToJson(book :Book) :Either[MongoError, io.circe.Json] = { Right(book.asJson) }
   def jsonToBook(json :io.circe.Json) :Either[MongoError, Book] = { decode[Book](json.spaces4) match {
-    case Left(circeExc) => Left(MongoError(circeExc.toString))
+    case Left(circeExc) => Left(MongoError(s"Unable to turn json into a book: ${circeExc.getMessage} (from JSON: ${json.spaces4})"))
     case Right(book) => Right(book)
   }}
 
@@ -64,7 +76,29 @@ object ExampleApp extends App {
     case Right(Some(book)) => println(s"Got this book: $book")
   }
 
-  // use some MongoHelper functions such as date between when sorting functions.
+  /*
+   *
+   * Example: Using the Casbah Interface!
+   *
+  */
+
+  val casbahRepo = new MongoCasbahSalatRepository(autoBookRepository)
+
+  val aliceInWonderland = casbahRepo.save(Book("Alice in Wonderland", "Carol", "678234832"))
+  val changed = aliceInWonderland.copy(isbn="86738921")
+
+  casbahRepo.save(changed)
+
+  val casbahFindResults :List[Book] = casbahRepo.find(casbah.MongoDBObject("title" -> "Alice in Wonderland"))
+  println(s"result count: ${casbahFindResults.length}")
+  println(s"first result: ${casbahFindResults.headOption}")
+
+  // example MongoDBObjects and how they translate to JSON
+
+  val testObj = casbah.MongoDBObject("date" -> ("$gt" -> new java.util.Date()))
+  testObj.put("deleted" -> false)
+  testObj.put("_id" -> "12121")
+
   println("test app finished")
 
 }

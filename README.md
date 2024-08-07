@@ -1,155 +1,122 @@
+
 RTP Mongo Library - Scala library to work with Mongodb drivers
 ==============================================================
 
-Application built with the following (main) technologies:
+Created in 2015, for Scala 2.11, this library bought [Mongo Casbah](https://mongodb.github.io/casbah/), the official Mongo driver at the time, and [Salat](https://github.com/salat/salat) together to create a seamless ORM for serialising domain objects to the database and writing effective Mongo queries.
 
-- Scala
+With Mongo Casbah abandoned and Salat un-portable due to its reliance on scalac internal apis our large business apps are held back on Scala 2.12 where support is slowly withering. This branch aims to rework the core platform:
 
-- SBT
+* moving us to the [latest official Mongo drivers](https://www.mongodb.com/docs/languages/scala/scala-driver/current/)
+* Using [Circe JSON](https://circe.github.io/circe/) (intentionally instead of codecs) for a platform independent serialisation solution
+* APIs that tightly mirror the major Casbah APIs we use such as MongoDBObject, MongoDBList and functions such as .save(), .find() .aggregate().
 
-- Casbah
+# Sample code:
 
-- Salat
+Use the official objects.
 
-- ReactiveMongo
-
-Introduction
-------------
-A library to easily "configure" your application to interact with Mongodb, currently via the Casbah driver.
-
-Configuration, as well as using the standard reference/application.conf, is done via mixins to your application and test code.
-
-To interact with Mongodb, choose to either utilise a Casbah or Salat Repository.
-
-A Casbah Repository represents a Mongodb collection to save and get back JSON.
-
-A Salat Repository represents a Mongodb collection to save a "domain" object (a case class) and get back said object.
-
-Build and Deploy
-----------------
-The project is built with SBT. On a Mac (sorry everyone else) do:
-```
-brew install sbt
-```
-
-It is also a good idea to install Typesafe Activator (which sits on top of SBT) for when you need to create new projects - it also has some SBT extras, so running an application with Activator instead of SBT can be useful. On Mac do:
-```
-brew install typesafe-activator
-```
-
-To compile:
-```
-sbt compile
-```
-
-or
-```
-activator compile
-```
-
-To run the specs:
-```
-sbt test
-```
-
-The following packages up this library - Note that "assembly" will first compile and test:
-```
-sbt assembly
-```
-
-Casbah Repository Example
--------------------------
 ```scala
-import uk.gov.homeoffice.mongo.casbah.Repository
+  // connect to localhost test db, with fully access to the official drivers and all its options
+  val globalDatabaseConnection :MongoConnection = MongoConnector.connect(
+    "mongodb://localhost/example",
+    "ExampleApp",
+    false,
+    "example"
+  )
 
-trait ThingsRepository extends Repository {
-  val collectionName = "things"
-}
-
-val thingsRepository = new ThingsRepository with MyMongo
-thingsRepository.collection.save(<my JSON>)
-
-// OR if you "apply" the instance of the repository being created (a la JavaScript), then you don't need to call "collection" before calling an API method such as "save", "find" etc.
-
-val thingsRepository = (new ThingsRepository with MyMongo)()
-thingsRepository.save(<my JSON>)
+  Await.result(globalDatabaseConnection.mongoCollection("exampleLogins").insertOne(Document(
+    "hello" -> true
+  )).head(), Duration.Inf)
 ```
 
-Of course, where did that "MyMongo" come from? Each repository, whether Casbah or Salat, needs a "Mongo" mixed in, where the Mongo trait wraps the actual connection to Mongodb and so needs to be configured with the Mongodb details e.g. host, port, credentials.
+Get streaming features, backed by fs2 for a low-memory, high performance solution
 
-MyMongo could be coded as:
 ```scala
-import com.typesafe.config.ConfigFactory
-import com.mongodb.casbah.MongoClientURI
+  // turn a collection into a repository and gain access to fs2 features.
+  val basicBookRepository = new MongoStreamRepository(globalDatabaseConnection, "books", List("_id"))
 
-trait MyMongo extends Mongo {
-  lazy val db = MyMongo.mydb
-}
-
-object MyMongo {
-  lazy val mydb = Mongo db MongoClientURI(ConfigFactory.load getString "mydb")
-}
+  val allBooks = basicBookRepository.all().compile.toList.unsafeRunSync()
+  println(s"All Books: ${allBooks}")
 ```
 
-Hey! That seems like a lot of extra set up code?
+Provide A => Json and vice-versa to get serialisation of objects to and from the DB.
 
-Well, the trait (MyMongo) is a must, as we need this to mixin to all your repositories for a particular Mongodb.
-
-Then the object reads the actual configuration - but why here, why not in the trait? For example, why not just do the following?
 ```scala
-trait MyMongo extends Mongo {
-  lazy val db = Mongo db MongoClientURI(ConfigFactory.load getString "mydb")
-}
+
+  def bookToJson(book :Book) :Either[MongoError, io.circe.Json] = { Right(book.asJson) }
+  def jsonToBook(json :io.circe.Json) :Either[MongoError, Book] = { decode[Book](json.spaces4) match {
+    case Left(circeExc) => Left(MongoError(s"Unable to turn json into a book: ${circeExc.getMessage} (from JSON: ${json.spaces4})"))
+    case Right(book) => Right(book)
+  }}
+
+  val autoBookRepository = new MongoObjectRepository[Book](new MongoJsonRepository(basicBookRepository)) {
+    def jsonToObject(json :Json) :MongoResult[Book] = jsonToBook(json)
+    def objectToJson(obj :Book) :MongoResult[Json] = bookToJson(obj)
+  }
+
+  // insert a book
+  val saveResult = autoBookRepository.insertOne(Book("The Davinci Code", "Mike row", "743927492")).unsafeRunSync()
+
+  println(s"Saving Davinci code returned: $saveResult")
 ```
 
-Big mistake! Everytime the trait is now mixed in, not only is a new Mongo connection created, an actual Mongo pool of connections are created - you'll soon have many connection pools and your application will quickly slow down.
+Using JSON means web based APIs can reuse serialisation both on the HTTP interface and the Database backend. We talk to the database using [Extended JSON mode](https://www.mongodb.com/docs/manual/reference/mongodb-extended-json/), which allows dates, object ids and other types to be encoded correctly. This subtle differences don't bleed into other serialisation if you use 
 
-Salat Repository Example
-------------------------
 ```scala
-import uk.gov.homeoffice.mongo.salat.Repository
 
-trait ThingsRepository extends Repository[Thing] {
-  val collectionName = "things"
-}
+  object ApiEncoding {
+    implicit val numberLongEncoder :Encoder[Long] = Encoder.encodeLong
+    implicit val numberLongDecoder :Decoder[Long] = Decoder.decodeLong
+  }
 
-val thingsRepository = new ThingsRepository with MyMongo
-thingsRepository save Thing()
-```
-
-where Thing would be one of your case classes.
-
-Testing
--------
-There are two available specifications for tests that interact with Mongo.
-MongoSpecification, which requires Mongo to be running locally, and EmbeddedMongoSpecification which has an embedded Mongo per specification.
-
-Via EmbeddedMongoSpecification, each example, within a specification, is run sequentially, as a test database is created and dropped.
-
-And via MongoSpecification, a unique test database is generated per example of a specification, allowing each to run (by default) in parallel.
-
-EmbeddedMongoSpecification Example
-----------------------------------
-This trait must be mixed into a Specs2 specification and will give you a TestMongo to mix into your repository.
-```scala
-class RepositoryEmbeddedMongoSpec extends Specification with EmbeddedMongoSpecification {
-  trait Context extends Scope {
-    val repository = new Repository[Thing] with TestMongo {
-      val collectionName = "tests"
+  object DatabaseEncoding {
+    implicit val numberLongEncoder: Encoder[Long] = new Encoder[Long] {
+      final def apply(l: Long): Json = Json.obj(
+        "$numberLong" -> Json.fromString(l.toString)
+      )
     }
   }
 
-  "Repository" should {
-    "find nothing" in new Context {
-      repository.findAll().toList must beEmpty
-    }
+  // defines a single book encoder
+
+  class MyBookEncoder(
+    implicit val numberLongEncoder :Encoder[Long],
+    implicit val numberLongDecoder :Decoder[Long],
+  ) {
+
+    import io.circe.generic.semiauto._
+    implicit val bookEncoder :Encoder[Book] = deriveEncoder[Book]
   }
-}
+
+  // sample code for http interface
+  import ApiEncoder._
+  implicit bookEnc = new MyBookEncoder()
+
+  HttpOK( myBook.asJson )
+
+  // notice that since ApiEncoder is imported, numbers converted to json like this: { "isbn" : 123 }
+
+  // alternatively in our db repositories we can simply import database encoder instead
+
+  import DatabaseEncoding._
+  implicit bookEnc = new MyBookEncoder()
+
+  database.save( myBook.asJson )
+
+  // This reuses MyBookEncoder... but since DatabaseEncoding was imported, numbers get
+  // serialised the correct way for Mongo which is this:
+
+  // { "isbn" : { "$numberLong" : "123" }}
+
 ```
 
-Example App
------------
-To run ExampleApp:
-```
-sbt test:run
+Finally to ease the migration of all our code we provide several APIS that resemble those originally offered with Casbah and Salat.
+
+```scala
+
+val casbahRepo = new MongoCasbahSalatRepository(autoBookRepository)
+
+val aliceInWonderland = casbahRepo.save(Book("Alice in Wonderland", "Carol", "678234832"))
+
+val results :List[Records] = casbah.find(MongoDBObject("createdDate" -> ("$gt" -> DateTime.now)))
+
 ```
