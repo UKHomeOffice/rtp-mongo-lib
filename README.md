@@ -28,7 +28,7 @@ Use the official objects.
   )).head(), Duration.Inf)
 ```
 
-Get streaming features, backed by fs2 for a low-memory, high performance solution
+Get streaming features, backed by [fs2](https://fs2.io/#/getstarted/install) for a low-memory, high performance solution
 
 ```scala
   // turn a collection into a repository and gain access to fs2 features.
@@ -59,7 +59,15 @@ Provide A => Json and vice-versa to get serialisation of objects to and from the
   println(s"Saving Davinci code returned: $saveResult")
 ```
 
-Using JSON means web based APIs can reuse serialisation both on the HTTP interface and the Database backend. We talk to the database using [Extended JSON mode](https://www.mongodb.com/docs/manual/reference/mongodb-extended-json/), which allows dates, object ids and other types to be encoded correctly. This subtle differences don't bleed into other serialisation if you use 
+Reasons we choose to use a separate JSON serialisation instead of the Mongo driver's codec solution:
+
+* Easier to provide backwards compatibility with Salat. It used to write `_typeHint` fields into the db we want to respect during our migrations without editing domain code.
+* We don't want to further couple ourselves to Mongo libraries given the issues we've had with Casbah.
+* Having a single way to serialise a domain object to JSON for http front-ends and database end makes our applications much easier to read and reason about, and far more transparent.
+* We have successfully ported some Mongo applications to Postgres and we are considering this for other solutions going forwards. We may extend rtp-mongo-lib to also be rtp-postgres-lib!
+* It is easier to mock, validate and ensure the correctness of db serialisation when codecs are not used.
+
+We talk to the database using [Extended JSON mode](https://www.mongodb.com/docs/manual/reference/mongodb-extended-json/), which allows dates, object ids and other types to be encoded correctly. This is important for performance and effective queries. The subtle differences between JSON to send to clients in your API vs the JSON you send the DB can differ in certain ways yet still allow huge amounts of code reuse. See this tecnique of basing implicits on top of other implicits:
 
 ```scala
 
