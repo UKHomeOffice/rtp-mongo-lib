@@ -1,5 +1,6 @@
-package uk.gov.homeoffice.mongo
+package uk.gov.homeoffice.mongo.repository
 
+import uk.gov.homeoffice.mongo._
 import uk.gov.homeoffice.mongo.model._
 
 import cats.effect.IO

@@ -13,7 +13,7 @@ val root = Project(id = "rtp-mongo-lib", base = file("."))
       "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5",
       "io.netty"         % "netty-all" % "4.1.112.Final",
 
-      "org.mongodb.scala" %% "mongo-scala-driver" % "5.1.2",
+      "org.mongodb.scala" %% "mongo-scala-driver" % "5.1.3",
 
       // Json support
       "io.circe" %% "circe-core" % "0.14.9",
@@ -22,8 +22,10 @@ val root = Project(id = "rtp-mongo-lib", base = file("."))
 
       // cats effect and streaming support
       "org.typelevel" %% "cats-effect" % "3.5.4",
-      "co.fs2" %% "fs2-core" % "3.10.2"
+      "co.fs2" %% "fs2-core" % "3.10.2",
 
+      // joda datetime support
+      "joda-time" % "joda-time" % "2.12.5"
     ),
     addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3"),
     addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")

@@ -4,6 +4,7 @@ import cats.effect.IO
 import org.mongodb.scala.bson.collection.immutable.Document
 
 import uk.gov.homeoffice.mongo._
+import uk.gov.homeoffice.mongo.repository._
 import uk.gov.homeoffice.mongo.model._
 
 import cats.effect.unsafe.implicits.global
@@ -89,7 +90,7 @@ object ExampleApp extends App {
 
   casbahRepo.save(changed)
 
-  val casbahFindResults :List[Book] = casbahRepo.find(casbah.MongoDBObject("title" -> "Alice in Wonderland"))
+  val casbahFindResults :List[casbah.MongoDBObject] = casbahRepo.find(casbah.MongoDBObject("title" -> "Alice in Wonderland")).toList
   println(s"result count: ${casbahFindResults.length}")
   println(s"first result: ${casbahFindResults.headOption}")
 

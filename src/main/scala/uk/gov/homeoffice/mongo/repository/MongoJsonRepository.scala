@@ -1,4 +1,4 @@
-package uk.gov.homeoffice.mongo
+package uk.gov.homeoffice.mongo.repository
 
 import cats.effect.IO
 import cats.implicits._
@@ -15,6 +15,8 @@ import io.circe.parser._
 import scala.util.Try
 
 import com.mongodb.client.result._
+
+import uk.gov.homeoffice.mongo._
 import uk.gov.homeoffice.mongo.model._
 
 class MongoJsonRepository(_mongoStreamRepository :MongoStreamRepository) {
@@ -92,6 +94,30 @@ class MongoJsonRepository(_mongoStreamRepository :MongoStreamRepository) {
     }
   }
 
+  def updateOne(target :Json, changes :Json) :IO[MongoResult[Json]] = {
+    (jsonToDocument(target), jsonToDocument(changes)) match {
+      case (Left(exc), _) => IO(Left(exc))
+      case (_, Left(exc)) => IO(Left(exc))
+      case (Right(t), Right(c)) =>
+        mongoStreamRepository.updateOne(t, c).map {
+          case Left(mongoError) => Left(mongoError)
+          case Right(updateOneResult) => Right(resultToJson(updateOneResult))
+        }
+    }
+  }
+
+  def updateMany(target :Json, changes :Json) :IO[MongoResult[Json]] = {
+    (jsonToDocument(target), jsonToDocument(changes)) match {
+      case (Left(exc), _) => IO(Left(exc))
+      case (_, Left(exc)) => IO(Left(exc))
+      case (Right(t), Right(c)) =>
+        mongoStreamRepository.updateMany(t, c).map {
+          case Left(mongoError) => Left(mongoError)
+          case Right(updateManyResult) => Right(resultToJson(updateManyResult))
+        }
+    }
+  }
+
   def aggregate(json :List[Json]) :fs2.Stream[IO, MongoResult[Json]] = {
     val jsonInputs :List[MongoResult[Document]] = json.map(jsonToDocument)
     jsonInputs.exists(_.isLeft) match {
@@ -105,6 +131,16 @@ class MongoJsonRepository(_mongoStreamRepository :MongoStreamRepository) {
           case Left(mongoError) => Left(mongoError)
           case Right(document) => documentToJson(document)
         }
+    }
+  }
+
+  def deleteOne(json :Json) :IO[MongoResult[DeleteResult]] = {
+    jsonToDocument(json) match {
+      case Left(mongoError) => IO(Left(mongoError))
+      case Right(document) => mongoStreamRepository.deleteOne(document).flatMap {
+        case Left(mongoError) => IO(Left(mongoError))
+        case Right(deleteResult) => IO(Right(deleteResult))
+      }
     }
   }
 }

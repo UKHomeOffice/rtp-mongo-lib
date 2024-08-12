@@ -1,5 +1,6 @@
-package uk.gov.homeoffice.mongo
+package uk.gov.homeoffice.mongo.repository
 
+import uk.gov.homeoffice.mongo._
 import uk.gov.homeoffice.mongo.model._
 import com.mongodb.client.result._
 
@@ -14,6 +15,7 @@ import org.mongodb.scala.model.Field
 import org.mongodb.scala.model.Filters.or
 import org.mongodb.scala.bson._
 
+import org.bson.types.ObjectId
 
 class MongoStreamRepository(
   val mongoConnection :MongoConnection,
@@ -62,9 +64,22 @@ class MongoStreamRepository(
     MongoHelpers.fromObservable(qry)
   }
 
+  def updateOne(target :Document, changes :Document) :IO[MongoResult[UpdateResult]] = {
+    val result = collection.updateOne(target, changes)
+    IO.fromFuture(IO(result.head())).map { updateOneResult => Right(updateOneResult) }
+  }
+
+  def updateMany(target :Document, changes :Document) :IO[MongoResult[UpdateResult]] = {
+    val result = collection.updateMany(target, changes)
+    IO.fromFuture(IO(result.head())).map { updateManyResult => Right(updateManyResult) }
+  }
+
   def aggregate(query :List[Document]) :fs2.Stream[IO, MongoResult[Document]] = {
     val qry = collection.aggregate(query)
     MongoHelpers.fromObservable(qry)
   }
 
+  def deleteOne(query :Document) :IO[MongoResult[DeleteResult]] = {
+    IO.fromFuture(IO(collection.deleteOne(query).toSingle().toFuture())).map { deleteResult => Right(deleteResult) }
+  }
 }

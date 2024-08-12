@@ -59,7 +59,10 @@ class MongoDBObject(init :mutable.Map[String, Object] = mutable.Map[String, Obje
     this
   }
 
-  def -=(other :MongoDBObject) :MongoDBObject = ???
+  def -=(other :MongoDBObject) :Unit =
+    other.data.keys.foreach { key => data.remove(key) }
+
+  def removeField(field :String) :Unit = data.remove(field)
 
   def containsField(field :String) :Boolean =
     expand(field, data).isDefined
@@ -109,24 +112,17 @@ class MongoDBObject(init :mutable.Map[String, Object] = mutable.Map[String, Obje
 
     Json.obj(keys :_*)
   }
+
+  // Casbah users seem to confuse MongoDBObject and MongoDBObjectBuilder up
+  // so for backwards compat this is just here, doing nothing
+  def result() :MongoDBObject = this
 }
-
-/*
-case class MongoDBObjectBuilder(obj :MongoDBObject) {
-  def +=(items :(String, Object)*) = obj += items.toMap
-  def +=(other :MongoDBObject) = obj += other.data
-  def put(items :(String, Object)*) = this += items
-  def putAll(other :MongoDBObject) = this.put(other.data.toList)
-  def result() :MongoDBObject = obj
-}*/
-
-case class MongoDBList(array :Array[Object])
 
 object MongoDBObject {
 
   def empty() :MongoDBObject = new MongoDBObject()
 
-  //def newBuilder() :MongoDBObjectBuilder = new MongoDBObjectBuilder(new MongoDBObject)
+  def newBuilder() :MongoDBObjectBuilder = new MongoDBObjectBuilder()
 
   def apply(json :io.circe.Json) :MongoDBObject = {
 
@@ -172,12 +168,12 @@ object MongoDBObject {
     new MongoDBObject(mutable.Map(in.toList :_*))
   }
 
-  def apply(in :(String, Object)*) :MongoDBObject = {
+  def apply[A](in :(String, A)*) :MongoDBObject = {
     val dbObj = new MongoDBObject()
     in.foreach { case (key, value) =>
       value match {
         case dt if dt.isInstanceOf[java.util.Date] => dbObj += (key, Map[String, Object]("$date" -> dt.toString))
-        case obj => dbObj += (key, obj)
+        case obj => dbObj += (key, obj.asInstanceOf[Object])
       }
     }
     dbObj

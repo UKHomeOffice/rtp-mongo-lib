@@ -38,7 +38,7 @@ Get streaming features, backed by [fs2](https://fs2.io/#/getstarted/install) for
   println(s"All Books: ${allBooks}")
 ```
 
-Provide A => Json and vice-versa to get serialisation of objects to and from the DB.
+Provide `A => io.circe.Json` and vice-versa to get serialisation of objects to and from the DB.
 
 ```scala
 
