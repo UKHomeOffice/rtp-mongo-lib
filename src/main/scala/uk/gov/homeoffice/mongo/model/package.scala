@@ -1,11 +1,5 @@
-package uk.gov.homeoffice.mongo
+package uk.gov.homeoffice.mongo.model
 
-object model {
-
-  case class MongoError(message :String)
+object syntax {
   type MongoResult[A] = Either[MongoError, A]
-
-  // TODO: class MongoInsertException for failures during INSERT (to help locking repo catch errors appropriately?)
-  class MongoException(msg :String) extends Exception(msg)
-
 }

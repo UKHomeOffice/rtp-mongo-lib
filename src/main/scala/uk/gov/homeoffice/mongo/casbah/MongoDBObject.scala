@@ -5,6 +5,9 @@ import scala.collection._
 import io.circe._
 // This is a cheap clone of Casbah's MongoDBObject
 
+import org.bson.types.ObjectId
+import org.joda.time.DateTime
+
 class MongoDBObject(init :mutable.Map[String, Object] = mutable.Map[String, Object]()) {
   
   val data :mutable.Map[String, Object] = init
@@ -91,11 +94,12 @@ class MongoDBObject(init :mutable.Map[String, Object] = mutable.Map[String, Obje
       obj match {
         case s if s.isInstanceOf[String] => Json.fromString(s.asInstanceOf[String])
         case i if i.isInstanceOf[Int] => Json.fromInt(i.asInstanceOf[Int])
-        case l if l.isInstanceOf[Long] => Json.fromLong(l.asInstanceOf[Long])
+        case l if l.isInstanceOf[Long] => Json.obj("$numberLong" -> Json.fromString(l.asInstanceOf[Long].toString))
         case l if l.isInstanceOf[Boolean] => Json.fromBoolean(l.asInstanceOf[Boolean])
-        case d if d.isInstanceOf[java.util.Date] => Json.obj("$date" -> Json.fromString(d.toString())) // TODO: Date format...
-        /* case d if d.isInstanceOf[ObjectId] => (k -> Json.obj("$oid" -> Json.fromString(d.toString()))) ObjectId -> Json. */
-        /* case d if d.isInstanceOf[ObjectId] => (k -> Json.obj("$oid" -> Json.fromString(d.toString()))) ObjectId -> Json. */
+        case d if d.isInstanceOf[java.util.Date] => Json.obj("$date" -> Json.fromString(d.toString()))
+        case d if d.isInstanceOf[DateTime] => Json.obj("$date" -> Json.fromString(d.toString()))
+        // TODO: Support java.time.ZonedDateTime + LocalDate
+        case d if d.isInstanceOf[ObjectId] => Json.obj("$oid" -> Json.fromString(d.toString()))
         case l if l.isInstanceOf[Array[_]] =>
           val arr = l.asInstanceOf[Array[Object]]
           val jsonArr = arr.map { item :Object => valueToJson(item) }
@@ -126,6 +130,10 @@ object MongoDBObject {
 
   def apply(json :io.circe.Json) :MongoDBObject = {
 
+    // TODO, expand to support all expected types (e.g. bool, long etc)
+    def lookahead(json :Json, fieldName :String) :Option[String] =
+      json.hcursor.downField(fieldName).get[String](fieldName).toOption
+
     def jsonValueToObject(json :Json) :Option[Object] = {
       json match {
         case j if j.isNumber => Some(j.asNumber.get.asInstanceOf[Object])
@@ -133,6 +141,9 @@ object MongoDBObject {
         case a if a.isArray => Some(a.asArray.get.asInstanceOf[Object])
         case n if n.isNull => None
         case b if b.isBoolean => Some(b.asBoolean.get.asInstanceOf[Object])
+        case m if m.isObject && lookahead(m, "$date").isDefined => lookahead(m, "$date").flatMap { str => scala.util.Try(DateTime.parse(str).asInstanceOf[Object]).toOption }
+        case m if m.isObject && lookahead(m, "$oid").isDefined => lookahead(m, "$oid").flatMap { str => scala.util.Try(new ObjectId(str).asInstanceOf[Object]).toOption }
+        case m if m.isObject && lookahead(m, "$numberLong").isDefined => lookahead(m, "$numberLong").flatMap { str => scala.util.Try(str.toLong.asInstanceOf[Object]).toOption }
         case m if m.isObject =>
           val jsonList :List[(String, Json)] = m.asObject.get.toList
           val objList :List[(String, Object)] = jsonList.map { case (key, jsVal) =>

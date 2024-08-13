@@ -1,7 +1,6 @@
 package uk.gov.homeoffice.mongo.casbah
 
-//import uk.gov.homeoffice.mongo.
-import uk.gov.homeoffice.mongo.repository.{CasbahDeleteResult, MongoCasbahSalatRepository}
+import uk.gov.homeoffice.mongo.casbah._
 
 /*
  * A lot of existing code uses inheritance. e.g. MyRepository extends Repository
@@ -28,6 +27,7 @@ import uk.gov.homeoffice.mongo.repository.{CasbahDeleteResult, MongoCasbahSalatR
 */
 
 trait CasbahPassthrough[A] {
+  /*
 
   val collection :MongoCasbahSalatRepository[A]
 
@@ -39,5 +39,5 @@ trait CasbahPassthrough[A] {
   def aggregate(filter :List[MongoDBObject]) :List[MongoDBObject] = collection.aggregate(filter)
   def drop() :Unit = collection.drop()
   def remove(query :MongoDBObject) :CasbahDeleteResult = collection.remove(query)
-  
+  */
 }

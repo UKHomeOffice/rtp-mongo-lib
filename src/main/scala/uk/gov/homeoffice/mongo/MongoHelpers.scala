@@ -5,6 +5,8 @@ import cats.implicits._
 import cats.effect.std.Queue
 import org.mongodb.scala.{Observable, Observer}
 
+import uk.gov.homeoffice.mongo.model.syntax._
+
 object MongoHelpers {
   import uk.gov.homeoffice.mongo.model._
 

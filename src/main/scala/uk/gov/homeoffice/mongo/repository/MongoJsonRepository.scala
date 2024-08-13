@@ -18,6 +18,7 @@ import com.mongodb.client.result._
 
 import uk.gov.homeoffice.mongo._
 import uk.gov.homeoffice.mongo.model._
+import uk.gov.homeoffice.mongo.model.syntax._
 
 class MongoJsonRepository(_mongoStreamRepository :MongoStreamRepository) {
 

@@ -4,8 +4,10 @@ import cats.effect.IO
 import org.mongodb.scala.bson.collection.immutable.Document
 
 import uk.gov.homeoffice.mongo._
+import uk.gov.homeoffice.mongo.casbah._
 import uk.gov.homeoffice.mongo.repository._
 import uk.gov.homeoffice.mongo.model._
+import uk.gov.homeoffice.mongo.model.syntax._
 
 import cats.effect.unsafe.implicits.global
 
@@ -83,7 +85,18 @@ object ExampleApp extends App {
    *
   */
 
-  val casbahRepo = new MongoCasbahSalatRepository(autoBookRepository)
+  val casbahRepo = new MongoCasbahSalatRepository[Book](new MongoCasbahRepository(new MongoJsonRepository(basicBookRepository))) {
+    def toMongoObject(a :Book) :MongoResult[MongoDBObject] = Right(MongoDBObject("author" -> a.author, "title" -> a.title, "isbn" -> a.isbn))
+    def fromMongoObject(mongoDBObject :MongoDBObject) :MongoResult[Book] =
+      (for {
+        author <- mongoDBObject.getAs[String]("author")
+        title <- mongoDBObject.getAs[String]("title")
+        isbn <- mongoDBObject.getAs[String]("isbn")
+      } yield { Book(author, title, isbn) }) match {
+        case None => Left(MongoError(s"Unable to reflate book"))
+        case Some(book) => Right(book)
+      }
+  }
 
   val aliceInWonderland = casbahRepo.save(Book("Alice in Wonderland", "Carol", "678234832"))
   val changed = aliceInWonderland.copy(isbn="86738921")

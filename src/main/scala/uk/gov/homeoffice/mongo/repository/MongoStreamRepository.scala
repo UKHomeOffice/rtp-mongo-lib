@@ -2,6 +2,7 @@ package uk.gov.homeoffice.mongo.repository
 
 import uk.gov.homeoffice.mongo._
 import uk.gov.homeoffice.mongo.model._
+import uk.gov.homeoffice.mongo.model.syntax._
 import com.mongodb.client.result._
 
 import cats.effect.IO
