@@ -15,6 +15,7 @@ import org.mongodb.scala.bson.Document
 import org.mongodb.scala.model.Field
 import org.mongodb.scala.model.Filters.or
 import org.mongodb.scala.bson._
+import scala.concurrent.ExecutionContext
 
 import org.bson.types.ObjectId
 
@@ -22,13 +23,16 @@ class MongoStreamRepository(
   val mongoConnection :MongoConnection,
   val collectionName :String,
   val primaryKeys :List[String] = List()
-) {
+) extends StrictLogging {
+  import uk.gov.homeoffice.mongo.MongoHelpers._
+  implicit val ec :ExecutionContext = ExecutionContext.global
 
   val collection = mongoConnection.mongoCollection[Document](collectionName)
 
   def insertOne(document :Document) :IO[MongoResult[InsertOneResult]] = {
     val result = collection.insertOne(document)
-    IO.fromFuture(IO(result.head())).map { insertOneResult => Right(insertOneResult) }
+
+    futureToIOMongoResult(result.head())
   }
 
   def save(document :Document) :IO[MongoResult[UpdateResult]] = {
@@ -44,43 +48,47 @@ class MongoStreamRepository(
     val searchDoc = new BsonDocument(elems)
     val replaceOptions = new ReplaceOptions().upsert(true)
 
-    IO.fromFuture(IO(collection.replaceOne(
+    futureToIOMongoResult { collection.replaceOne(
       searchDoc,
       document,
       replaceOptions
-    ).toSingle().toFuture())).map { updateResult => Right(updateResult) }
+    ).toSingle().toFuture() }
   }
 
-  def findOne(query :Document) :IO[MongoResult[Option[Document]]] = {
-    IO.fromFuture(IO(collection.find(query).toSingle().toFutureOption())).map { maybeDocument => Right(maybeDocument) }
-  }
+  def findOne(query :Document) :IO[MongoResult[Option[Document]]] =
+    futureToIOMongoResult(collection.find(query).toSingle().toFutureOption())
 
   def find(query :Document) :fs2.Stream[IO, MongoResult[Document]] = {
     val qry = collection.find(query)
-    MongoHelpers.fromObservable(qry)
+    fromObservable(qry)
   }
 
   def all() :fs2.Stream[IO, MongoResult[Document]] = {
     val qry = collection.find()
-    MongoHelpers.fromObservable(qry)
+    fromObservable(qry)
   }
 
   def updateOne(target :Document, changes :Document) :IO[MongoResult[UpdateResult]] = {
     val result = collection.updateOne(target, changes)
-    IO.fromFuture(IO(result.head())).map { updateOneResult => Right(updateOneResult) }
+    futureToIOMongoResult(result.head())
   }
 
   def updateMany(target :Document, changes :Document) :IO[MongoResult[UpdateResult]] = {
     val result = collection.updateMany(target, changes)
-    IO.fromFuture(IO(result.head())).map { updateManyResult => Right(updateManyResult) }
+    futureToIOMongoResult(result.head())
   }
 
   def aggregate(query :List[Document]) :fs2.Stream[IO, MongoResult[Document]] = {
     val qry = collection.aggregate(query)
-    MongoHelpers.fromObservable(qry)
+    fromObservable(qry)
   }
 
   def deleteOne(query :Document) :IO[MongoResult[DeleteResult]] = {
-    IO.fromFuture(IO(collection.deleteOne(query).toSingle().toFuture())).map { deleteResult => Right(deleteResult) }
+    val result = collection.deleteOne(query)
+    futureToIOMongoResult(result.toSingle().toFuture())
+  }
+
+  def drop() :IO[MongoResult[Unit]] = {
+    futureToIOMongoResult(collection.drop().toFuture())
   }
 }

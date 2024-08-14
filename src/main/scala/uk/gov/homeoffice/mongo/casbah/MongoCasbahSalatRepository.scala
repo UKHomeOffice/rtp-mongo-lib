@@ -19,7 +19,7 @@ import io.circe.Json
 import scala.util.Try
 import org.bson.types.ObjectId
 
-abstract class MongoCasbahSalatRepository[A](_mongoCasbahRepository :MongoCasbahRepository) extends CasbahPassthrough[A] {
+abstract class MongoCasbahSalatRepository[A](_mongoCasbahRepository :MongoCasbahRepository) {
 
   val mongoCasbahRepository :MongoCasbahRepository = _mongoCasbahRepository
 
@@ -53,8 +53,8 @@ abstract class MongoCasbahSalatRepository[A](_mongoCasbahRepository :MongoCasbah
     }
   }
 
-  // Casbah Passthrough?
   def find(filter :MongoDBObject) :DBCursor = mongoCasbahRepository.find(filter)
+  def find(filter :MongoDBObject, projection :MongoDBObject) :DBCursor = mongoCasbahRepository.find(filter, projection)
   def aggregate(filter :List[MongoDBObject]) :List[MongoDBObject] = mongoCasbahRepository.aggregate(filter)
   def update(target :MongoDBObject, changes :MongoDBObject) :CasbahWriteResult = mongoCasbahRepository.update(target, changes)
   def drop() :Unit = mongoCasbahRepository.drop()

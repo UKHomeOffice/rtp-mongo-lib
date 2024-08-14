@@ -1,12 +1,15 @@
 package uk.gov.homeoffice.mongo.casbah
 
+import scala.reflect.ClassTag
+
 object syntax {
 
-  type DBObject = MongoDBObject
   type BasicDBList = MongoDBList[MongoDBObject]
 
+  implicit def mongoDBObjectDowngrade(a :MongoDBObject) :DBObject = { new DBObject(a) }
+
   implicit class SyntaxOps(val underlying :String) extends AnyVal {
-    def `$set`[A](in :(String, A)*) :MongoDBObject = MongoDBObject(underlying -> MongoDBObject("$set" -> in))
+    def `$set`[A](in :(String, A)*) :MongoDBObject = MongoDBObject(underlying -> MongoDBObject("$set" -> MongoDBObject(in :_*)))
 
     def `$eq`[A](in :(String, A)*) :MongoDBObject = MongoDBObject(underlying -> MongoDBObject("$eq" -> in))
     def `$eq`[A](in :A) :MongoDBObject = MongoDBObject(underlying -> MongoDBObject("$eq" -> in))
@@ -29,23 +32,23 @@ object syntax {
     def `$exists`[A](in :(String, A)*) :MongoDBObject = MongoDBObject(underlying -> MongoDBObject("$exists" -> in))
     def `$exists`[A](in :A) :MongoDBObject = MongoDBObject(underlying -> MongoDBObject("$exists" -> in))
 
-    def `$in`[A](in :List[A]) :MongoDBObject = MongoDBObject(underlying -> MongoDBObject("$in" -> in))
-    def `$in`[A](in :Iterable[A]) :MongoDBObject = MongoDBObject(underlying -> MongoDBObject("$in" -> in))
+    def `$in`[A : ClassTag](in :List[A]) :MongoDBObject = MongoDBObject(underlying -> MongoDBObject("$in" -> in.toArray))
+    def `$in`[A : ClassTag](in :Iterable[A]) :MongoDBObject = MongoDBObject(underlying -> MongoDBObject("$in" -> in.toArray))
   }
 
-  def `$set`[A](in :(String, A)*) :MongoDBObject = MongoDBObject("$set" -> in)
-  def `$eq`[A](in :(String, A)*) :MongoDBObject = MongoDBObject("$eq" -> in)
+  def `$set`[A](in :(String, A)*) :MongoDBObject = MongoDBObject("$set" -> MongoDBObject(in :_*))
+  def `$eq`[A](in :(String, A)*) :MongoDBObject = MongoDBObject("$eq" -> MongoDBObject(in :_*))
 
-  def `$and`[A](a :MongoDBObject, b :MongoDBObject) :MongoDBObject = MongoDBObject("$and" -> List(a, b))
-  def `$or`[A](a :MongoDBObject, b :MongoDBObject) :MongoDBObject = MongoDBObject("$or" -> List(a, b))
+  def `$and`(a :MongoDBObject, b :MongoDBObject) :MongoDBObject = MongoDBObject("$and" -> Array[MongoDBObject](a, b))
+  def `$or`(a :MongoDBObject, b :MongoDBObject) :MongoDBObject = MongoDBObject("$or" -> Array[MongoDBObject](a, b))
 
   def `$gt`[A](in :(String, A)*) :MongoDBObject = MongoDBObject("$gt" -> in)
   def `$gte`[A](in :(String, A)*) :MongoDBObject = MongoDBObject("$gte" -> in)
   def `$lt`[A](in :(String, A)*) :MongoDBObject = MongoDBObject("$lt" -> in)
   def `$lte`[A](in :(String, A)*) :MongoDBObject = MongoDBObject("$lte" -> in)
   def `$exists`[A](in :(String, A)*) :MongoDBObject = MongoDBObject("$exists" -> in)
-  def `$in`[A](in :List[A]) :MongoDBObject = MongoDBObject("$in" -> in)
-  def `$in`[A](in :Iterable[A]) :MongoDBObject = MongoDBObject("$in" -> in)
+  def `$in`[A : ClassTag](in :List[A]) :MongoDBObject = MongoDBObject("$in" -> in.toArray)
+  def `$in`[A : ClassTag](in :Iterable[A]) :MongoDBObject = MongoDBObject("$in" -> in.toArray)
 
   // TODO: untested and probably not working as A => Obj / Json not defined. Only here from compilation atm
   def dateRangeQuery[A](from :Option[A], to :Option[A]) = (from, to) match {

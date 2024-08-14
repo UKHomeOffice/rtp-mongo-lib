@@ -27,7 +27,6 @@ import uk.gov.homeoffice.mongo.casbah._
 */
 
 trait CasbahPassthrough[A] {
-  /*
 
   val collection :MongoCasbahSalatRepository[A]
 
@@ -39,5 +38,5 @@ trait CasbahPassthrough[A] {
   def aggregate(filter :List[MongoDBObject]) :List[MongoDBObject] = collection.aggregate(filter)
   def drop() :Unit = collection.drop()
   def remove(query :MongoDBObject) :CasbahDeleteResult = collection.remove(query)
-  */
+
 }

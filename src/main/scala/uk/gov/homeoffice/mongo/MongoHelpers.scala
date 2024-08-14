@@ -1,9 +1,11 @@
 package uk.gov.homeoffice.mongo
 
+import cats.data.EitherT
 import cats.effect.IO
 import cats.implicits._
 import cats.effect.std.Queue
 import org.mongodb.scala.{Observable, Observer}
+import scala.concurrent.{Future, ExecutionContext}
 
 import uk.gov.homeoffice.mongo.model.syntax._
 
@@ -29,4 +31,20 @@ object MongoHelpers {
       qnt <- fs2.Stream.fromQueueNoneTerminated(q)
     } yield { qnt }
   }
+
+  def futureToIO[A](future :scala.concurrent.Future[A]) :IO[A] =
+    IO.fromFuture(IO(future))
+
+  def futureToIOMongoResult[A](future :scala.concurrent.Future[A])(implicit ec :ExecutionContext) :IO[MongoResult[A]] =
+    futureToIO[A](future)
+      .attempt
+      .map { _.left.map { throwable => MongoError(s"MONGO EXCEPTION: ${throwable.getMessage}") }}
+
+  def mongoResultCollect[B](in :List[MongoResult[B]]) :MongoResult[List[B]] = {
+    in.collect { case Left(mongoResult) => mongoResult } match {
+      case Nil => Right(EitherT(in).collectRight)
+      case listOfErrors => Left(MongoError(listOfErrors.map(_.message).mkString(",")))
+    }
+  }
+
 }

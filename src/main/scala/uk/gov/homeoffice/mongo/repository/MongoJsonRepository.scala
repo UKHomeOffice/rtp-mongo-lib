@@ -24,8 +24,10 @@ class MongoJsonRepository(_mongoStreamRepository :MongoStreamRepository) {
 
   val mongoStreamRepository :MongoStreamRepository = _mongoStreamRepository
 
-  def jsonToDocument(json :Json) :MongoResult[Document] =
+  def jsonToDocument(json :Json) :MongoResult[Document] = {
+    println(s"CONVERTING $json INTO ${json.deepDropNullValues.spaces4}")
     Try(Document(json.deepDropNullValues.spaces4)).toEither.left.map(exc => MongoError(exc.getMessage()))
+  }
 
   def documentToJson(document :Document) :MongoResult[Json] = {
     val jsonWriterSettings = JsonWriterSettings.builder().outputMode(JsonMode.EXTENDED).build()
@@ -81,9 +83,13 @@ class MongoJsonRepository(_mongoStreamRepository :MongoStreamRepository) {
   def find(json :Json) :fs2.Stream[IO, MongoResult[Json]] = {
     jsonToDocument(json) match {
       case Left(mongoError) => fs2.Stream.emit[IO, MongoResult[Json]](Left(mongoError))
-      case Right(document) => mongoStreamRepository.find(document).map {
-        case Left(mongoError) => Left(mongoError)
-        case Right(document) => documentToJson(document)
+      case Right(document) =>
+        println(s"EXECUTING JSON: $json")
+        mongoStreamRepository.find(document).map {
+          case Left(mongoError) => Left(mongoError)
+          case Right(document) =>
+            println(s"DOCUMENT RETURNED: $document")
+            documentToJson(document)
       }
     }
   }
