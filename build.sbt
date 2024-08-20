@@ -25,7 +25,9 @@ val root = Project(id = "rtp-mongo-lib", base = file("."))
       "co.fs2" %% "fs2-core" % "3.10.2",
 
       // joda datetime support
-      "joda-time" % "joda-time" % "2.12.5"
+      "joda-time" % "joda-time" % "2.12.5",
+
+      "uk.gov.homeoffice" %% "rtp-test-lib" % "1.6.22-gacd233d"
     ),
     addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3"),
     addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")

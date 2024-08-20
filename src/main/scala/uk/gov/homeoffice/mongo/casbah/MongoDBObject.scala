@@ -5,19 +5,25 @@ import scala.collection._
 import io.circe._
 // This is a cheap clone of Casbah's MongoDBObject
 
+import scala.util.Try
 import org.bson.types.ObjectId
 import org.joda.time.DateTime
 
 class MongoDBObject(init :mutable.Map[String, AnyRef] = mutable.Map[String, AnyRef]()) {
-  
+
   val data :mutable.Map[String, AnyRef] = init
 
-  def expand(field :String, root :mutable.Map[String, AnyRef]) :Option[AnyRef] = {
-    println(s"EXPAND looking for $field in ${root.keys}")
+  def expand(field :String, root :MongoDBObject) :Option[AnyRef] = {
     field.split("\\.").toList match {
       case Nil => None
-      case head :: Nil => root.get(head)
-      case head :: remaining => expand(remaining.mkString("."), root.get(head).asInstanceOf[mutable.Map[String,AnyRef]])
+      case head :: Nil => root.data.get(head)
+      case head :: remaining =>
+        root.data.get(head) match {
+          case Some(v) if v.isInstanceOf[MongoDBObject] =>
+            expand(remaining.mkString("."), v.asInstanceOf[MongoDBObject])
+          case Some(v) => Some(v)
+          case None => None
+        }
     }
   }
 
@@ -28,30 +34,30 @@ class MongoDBObject(init :mutable.Map[String, AnyRef] = mutable.Map[String, AnyR
     getAs[AnyRef](field)
 
   def getAs[A](field :String) :Option[A] = {
-    def lookahead(in :Object, field :String) :Option[AnyRef] = in.isInstanceOf[Map[_, _]] match {
-      case true =>
-        val innerMap = in.asInstanceOf[Map[String, AnyRef]]
-        (innerMap.keySet.toList == List(field)) match {
-          case true => innerMap.get(field)
-          case false => None
-        }
-      case false => None
+
+    def lookahead(in :Any, field :String) :Option[AnyRef] =
+      Try(in.asInstanceOf[MongoDBObject].get(field)).toOption.flatten
+
+    val retval :Option[_] = expand(field, this).flatMap {
+      case Some(i) => Some(i.asInstanceOf[AnyRef]) // TODO: consider if this is correct
+      case oid :ObjectId => Some(oid)
+      case m if lookahead(m, "$oid").isDefined => lookahead(m, "$oid").flatMap { anyRef =>
+        Try(new ObjectId(anyRef.asInstanceOf[String])).toOption
+      }
+      case d if lookahead(d, "$date").isDefined => lookahead(d, "$date").flatMap {
+        case l if l.isInstanceOf[Long] => Try(new DateTime(l.asInstanceOf[Long])).toOption
+        case s => Try(DateTime.parse(s.asInstanceOf[String])).toOption
+      }
+      case m if lookahead(m, "$numberLong").isDefined => lookahead(m, "$numberLong").flatMap {
+        case longStr => Try(longStr.asInstanceOf[String].toLong).toOption
+      }
+      case v :Vector[_] => Some(MongoDBList(v.asInstanceOf[Vector[AnyRef]]))
+      case x => Some(x)
     }
 
-    expand(field, data).map {
-      case s :Some[_] => s.asInstanceOf[Some[AnyRef]].get.asInstanceOf[A]
-      case oid :ObjectId => oid.asInstanceOf[A]
-      /* warning, can throw NoneException */
-      case m if lookahead(m, "$oid").isDefined => lookahead(m, "$oid").map( anyRef => new ObjectId(anyRef.asInstanceOf[String])).get.asInstanceOf[A]
-      case m if lookahead(m, "$date").isDefined => lookahead(m, "$date").map { innerValue => innerValue match {
-        case x if x.isInstanceOf[String] => DateTime.parse(innerValue.asInstanceOf[String]).asInstanceOf[A]
-        case j if lookahead(j, "$numberLong").isDefined => lookahead(j, "$numberLong").map { innerValue => new DateTime(innerValue.asInstanceOf[String].toLong) }.get.asInstanceOf[A]
-      }}.get.asInstanceOf[A]
-      case m if lookahead(m, "$numberLong").isDefined => lookahead(m, "$numberLong").map { longStr => longStr.asInstanceOf[String].toLong }.get.asInstanceOf[A]
-      case v :Vector[_] =>
-        println(s"In the vector branch with $v ${v.length}")
-        MongoDBList(v.asInstanceOf[Vector[AnyRef]]).asInstanceOf[A]
-      case x => x.asInstanceOf[A]
+    retval match {
+      case Some(v) if v.isInstanceOf[A] => Some(v.asInstanceOf[A])
+      case _ => None
     }
   }
 
@@ -62,21 +68,42 @@ class MongoDBObject(init :mutable.Map[String, AnyRef] = mutable.Map[String, AnyR
     data.iterator
 
   def ++(other :MongoDBObject) :MongoDBObject = {
-    val combined :Map[String, AnyRef] = data ++ other.data
     val dbObj = new MongoDBObject()
-    dbObj += combined
+    data.foreach { case (k, v) => dbObj += (k -> v) }
+    other.data.foreach { case (k, v) => dbObj += (k -> v) }
     dbObj
   }
 
   def +=[A](key :String, value :A) :MongoDBObject = {
-    println(s"Adding $key to MongoDBObject. $value (${value.getClass})")
-    value match {
-      case v :Option[_] if v.asInstanceOf[Option[AnyRef]].isDefined => this += (key, v.asInstanceOf[Option[AnyRef]].get)
-      case v :Some[_] if v.asInstanceOf[Some[AnyRef]].isDefined => this += (key, v.asInstanceOf[Some[AnyRef]].get)
-      case x =>
-        data += (key -> x.asInstanceOf[AnyRef])
-        this
+
+    val writeValue :AnyRef = value match {
+      case v if v.isInstanceOf[DateTime] => MongoDBObject("$date" -> value.asInstanceOf[DateTime].toString())
+      case v if v.isInstanceOf[Long] => MongoDBObject("$numberLong" -> value.asInstanceOf[Long].toString())
+      case v if v.isInstanceOf[ObjectId] => MongoDBObject("$oid" -> v.asInstanceOf[ObjectId].toHexString())
+      case v => v.asInstanceOf[AnyRef]
     }
+
+    key.split("\\.").toList match {
+      case Nil => ()
+      case head :: Nil => data += (key -> writeValue)
+      case head :: remaining =>
+        data.get(head) match {
+          case Some(existingVal) if existingVal.isInstanceOf[MongoDBObject] =>
+            // subobject is a map we can reuse.
+            val child = existingVal.asInstanceOf[MongoDBObject]
+            child += (remaining.mkString(".") -> value)
+          case Some(existingVal) =>
+            /* overwriting existingVal with new value */
+            val child = new MongoDBObject()
+            child += (remaining.mkString(".") -> value)
+            data += (head -> child)
+          case None =>
+            val child = new MongoDBObject()
+            child += (remaining.mkString(".") -> value)
+            data += (head -> child)
+        }
+    }
+    this
   }
 
   def +=[A](in :(String, A)) :MongoDBObject = {
@@ -89,18 +116,13 @@ class MongoDBObject(init :mutable.Map[String, AnyRef] = mutable.Map[String, AnyR
     this
   }
 
-  def +=(otherMap :Map[String, AnyRef]) :MongoDBObject = {
-    otherMap.toList.foreach { case (k, v) => this += (k -> v) }
-    this
-  }
-
   def -=(other :MongoDBObject) :Unit =
     other.data.keys.foreach { key => data.remove(key) }
 
   def removeField(field :String) :Unit = data.remove(field)
 
   def containsField(field :String) :Boolean =
-    expand(field, data).isDefined
+    expand(field, this).isDefined
 
   def put[A](key :String, value :A) :MongoDBObject = {
     this += (key, value)
@@ -116,7 +138,7 @@ class MongoDBObject(init :mutable.Map[String, AnyRef] = mutable.Map[String, AnyR
 
   def keySet() :Set[String] = data.keySet
   def containsKey(key :String) :Boolean = data.keySet.contains(key)
-  def toMap() :Map[String, AnyRef] = data /* Danger! Sharing a reference to a mutable object!! */
+  def toMap() :mutable.Map[String, AnyRef] = data /* Danger! Sharing a reference to a mutable object!! */
 
   def asDBObject() :DBObject = new DBObject(this)
 
@@ -156,6 +178,16 @@ class MongoDBObject(init :mutable.Map[String, AnyRef] = mutable.Map[String, AnyR
     Json.obj(keys :_*)
   }
 
+  override def hashCode :Int = 41 * data.hashCode
+
+  override def equals(other :Any) :Boolean = {
+    other.isInstanceOf[MongoDBObject] match {
+      case true =>
+        data.equals(other.asInstanceOf[MongoDBObject].data)
+      case false => false
+    }
+  }
+
   override def toString() :String = {
     val dataStr = data.map {
       case (k, v) if v.isInstanceOf[String] => s"$k -> ${v.asInstanceOf[String]}"
@@ -163,6 +195,7 @@ class MongoDBObject(init :mutable.Map[String, AnyRef] = mutable.Map[String, AnyR
       case (k, v) if v.isInstanceOf[ObjectId] => s"$k -> ${v.asInstanceOf[ObjectId]}"
       case (k, v) if v.isInstanceOf[MongoDBObject] => s"$k -> ${v.asInstanceOf[MongoDBObject].toString}"
       case (k, v) if v.isInstanceOf[MongoDBList[_]] => s"$k -> ${v.asInstanceOf[MongoDBList[_]].toList.mkString(",")}"
+      case (k, v) if v.isInstanceOf[mutable.Map[_, _]] => s"$k -> ${v.asInstanceOf[mutable.Map[String, AnyRef]].toString}"
       case (k, v) if v.isInstanceOf[AnyRef] => s"$k -> ${v}"
     }.mkString(",")
 
@@ -205,7 +238,7 @@ object MongoDBObject {
             }
           }.flatten
 
-          val map :Map[String, AnyRef] = objList.toMap
+          val map :mutable.Map[String, AnyRef] = mutable.Map(objList.toMap.toSeq :_*)
           Some(map.asInstanceOf[AnyRef])
         case x => Some(x.toString.asInstanceOf[AnyRef])
       }
@@ -221,8 +254,7 @@ object MongoDBObject {
           }
         }.flatten
 
-        val map :Map[String, AnyRef] = objList.toMap
-        println(s"JSON REINFLATE TURNS $json INTO $map")
+        val map = mutable.Map[String, AnyRef](objList :_*)
         MongoDBObject(map)
     }
   }
