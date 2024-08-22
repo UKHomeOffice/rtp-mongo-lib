@@ -74,7 +74,7 @@ object ExampleApp extends App {
   // read a book
   val daVinci = autoBookRepository.findOne(Json.obj("title" -> Json.fromString("The Davinci Code"))).unsafeRunSync()
   daVinci match {
-    case Left(appError) => println(s"Unable to reinflate daVinci: $appError")
+    case Left(mongoError) => println(s"Unable to reinflate daVinci: $mongoError")
     case Right(None) => println(s"Davinci book not found")
     case Right(Some(book)) => println(s"Got this book: $book")
   }

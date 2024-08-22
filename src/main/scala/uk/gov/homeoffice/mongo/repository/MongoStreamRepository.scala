@@ -7,7 +7,7 @@ import com.mongodb.client.result._
 
 import cats.effect.IO
 import cats.implicits._
-import com.mongodb.client.model.ReplaceOptions
+import com.mongodb.client.model.{UpdateOptions, ReplaceOptions}
 import com.typesafe.scalalogging.StrictLogging
 import org.bson.json._
 import org.bson.conversions.Bson
@@ -68,13 +68,16 @@ class MongoStreamRepository(
     fromObservable(qry)
   }
 
-  def updateOne(target :Document, changes :Document) :IO[MongoResult[UpdateResult]] = {
-    val result = collection.updateOne(target, changes)
+  def countDocuments(query :Document) :IO[MongoResult[Long]] =
+    futureToIOMongoResult(collection.countDocuments(query).toFuture())
+
+  def updateOne(target :Document, changes :Document, upsert :Boolean = false) :IO[MongoResult[UpdateResult]] = {
+    val result = collection.updateOne(target, changes, new UpdateOptions().upsert(upsert))
     futureToIOMongoResult(result.head())
   }
 
-  def updateMany(target :Document, changes :Document) :IO[MongoResult[UpdateResult]] = {
-    val result = collection.updateMany(target, changes)
+  def updateMany(target :Document, changes :Document, upsert :Boolean = false) :IO[MongoResult[UpdateResult]] = {
+    val result = collection.updateMany(target, changes, new UpdateOptions().upsert(upsert))
     futureToIOMongoResult(result.head())
   }
 

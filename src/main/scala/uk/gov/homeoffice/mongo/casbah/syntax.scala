@@ -34,28 +34,42 @@ object syntax {
 
     def `$in`[A : ClassTag](in :List[A]) :MongoDBObject = MongoDBObject(underlying -> MongoDBObject("$in" -> in.toArray))
     def `$in`[A : ClassTag](in :Iterable[A]) :MongoDBObject = MongoDBObject(underlying -> MongoDBObject("$in" -> in.toArray))
+
+    def `$nin`[A : ClassTag](in :List[A]) :MongoDBObject = MongoDBObject(underlying -> MongoDBObject("$nin" -> in.toArray))
+    def `$nin`[A : ClassTag](in :Iterable[A]) :MongoDBObject = MongoDBObject(underlying -> MongoDBObject("$nin" -> in.toArray))
+
+    def `$push`[A](in :(String, A)*) :MongoDBObject = MongoDBObject(underlying -> MongoDBObject("$push" -> in))
+    def `$push`[A](in :A) :MongoDBObject = MongoDBObject(underlying -> MongoDBObject("$push" -> in))
   }
 
   def `$set`[A](in :(String, A)*) :MongoDBObject = MongoDBObject("$set" -> MongoDBObject(in :_*))
   def `$eq`[A](in :(String, A)*) :MongoDBObject = MongoDBObject("$eq" -> MongoDBObject(in :_*))
 
-  def `$and`(a :MongoDBObject, b :MongoDBObject) :MongoDBObject = MongoDBObject("$and" -> Array[MongoDBObject](a, b))
-  def `$or`(a :MongoDBObject, b :MongoDBObject) :MongoDBObject = MongoDBObject("$or" -> Array[MongoDBObject](a, b))
+  def `$and`(in :MongoDBObject*) :MongoDBObject = MongoDBObject("$and" -> in.toArray[MongoDBObject])
+  def `$or`(in :MongoDBObject*) :MongoDBObject = MongoDBObject("$or" -> in.toArray[MongoDBObject])
 
   def `$gt`[A](in :(String, A)*) :MongoDBObject = MongoDBObject("$gt" -> in)
   def `$gte`[A](in :(String, A)*) :MongoDBObject = MongoDBObject("$gte" -> in)
+
   def `$lt`[A](in :(String, A)*) :MongoDBObject = MongoDBObject("$lt" -> in)
   def `$lte`[A](in :(String, A)*) :MongoDBObject = MongoDBObject("$lte" -> in)
+
   def `$exists`[A](in :(String, A)*) :MongoDBObject = MongoDBObject("$exists" -> in)
+
   def `$in`[A : ClassTag](in :List[A]) :MongoDBObject = MongoDBObject("$in" -> in.toArray)
   def `$in`[A : ClassTag](in :Iterable[A]) :MongoDBObject = MongoDBObject("$in" -> in.toArray)
 
+  def `$nin`[A : ClassTag](in :List[A]) :MongoDBObject = MongoDBObject("$nin" -> in.toArray)
+  def `$nin`[A : ClassTag](in :Iterable[A]) :MongoDBObject = MongoDBObject("$nin" -> in.toArray)
+
+  def `$push`[A](in :(String, A)*) :MongoDBObject = MongoDBObject("$push" -> in)
+
   // TODO: untested and probably not working as A => Obj / Json not defined. Only here from compilation atm
-  def dateRangeQuery[A](from :Option[A], to :Option[A]) = (from, to) match {
-    case (None, None) => MongoDBObject()
-    case (Some(f), None) => MongoDBObject("$gte" -> f)
-    case (None, Some(t)) => MongoDBObject("$lte" -> t)
-    case (Some(f), Some(t)) => MongoDBObject("$gte" -> f, "$lte" -> t)
+  def dateRangeQuery[A](from :Option[A], to :Option[A]) :Option[MongoDBObject] = (from, to) match {
+    case (None, None) => None
+    case (Some(f), None) => Some(MongoDBObject("$gte" -> f))
+    case (None, Some(t)) => Some(MongoDBObject("$lte" -> t))
+    case (Some(f), Some(t)) => Some(MongoDBObject("$gte" -> f, "$lte" -> t))
   }
 
 }

@@ -48,7 +48,7 @@ class MongoCasbahRepository(_mongoJsonRepository :MongoJsonRepository) {
 
   def find(filter :MongoDBObject) :DBCursor = {
     def stripErrors(in :MongoResult[Json]) = in match {
-      case Left(appError) => throw new MongoException(s"MONGO EXCEPTION: MongoCasbahRepository.find($filter): $appError")
+      case Left(mongoError) => throw new MongoException(s"MONGO EXCEPTION: MongoCasbahRepository.find($filter): $mongoError")
       case Right(json) => MongoDBObject(json)
     }
     val resultList :List[MongoDBObject] = mongoJsonRepository.find(filter.toJson).map(a => stripErrors(a)).compile.toList.unsafeRunSync()
@@ -57,11 +57,18 @@ class MongoCasbahRepository(_mongoJsonRepository :MongoJsonRepository) {
 
   def find(filter :MongoDBObject, projection :MongoDBObject) :DBCursor = {
     def stripErrors(in :MongoResult[Json]) = in match {
-      case Left(appError) => throw new MongoException(s"MONGO EXCEPTION: MongoCasbahRepository.find($filter, $projection): $appError")
+      case Left(mongoError) => throw new MongoException(s"MONGO EXCEPTION: MongoCasbahRepository.find($filter, $projection): $mongoError")
       case Right(json) => MongoDBObject(json)
     }
     val resultList :List[MongoDBObject] = mongoJsonRepository.find(filter.toJson).map(a => stripErrors(a)).compile.toList.unsafeRunSync()
     new DBCursor(resultList)
+  }
+
+  def count(filter :MongoDBObject) :Long = {
+    mongoJsonRepository.countDocuments(filter.toJson).unsafeRunSync() match {
+      case Left(mongoError) => throw new MongoException(s"MONGO EXCEPTION: MongoCasbahRepository.count($filter): $mongoError")
+      case Right(countLong) => countLong
+    }
   }
 
   def aggregate(filter :List[MongoDBObject]) :List[MongoDBObject] = {
@@ -74,10 +81,18 @@ class MongoCasbahRepository(_mongoJsonRepository :MongoJsonRepository) {
     }
   }
 
-  def update(target :MongoDBObject, changes :MongoDBObject) :CasbahWriteResult = {
-    mongoJsonRepository.updateMany(target.toJson, changes.toJson).unsafeRunSync() match {
-      case Left(mongoError) => throw new Exception(s"MONGO EXCEPTION: MongoCasbahRepository.update($target, $changes): $mongoError")
-      case Right(updateResultJson) => CasbahWriteResult(updateResultJson)
+  def update(target :MongoDBObject, changes :MongoDBObject, multi: Boolean = true, upsert :Boolean = false) :CasbahWriteResult = {
+    multi match {
+      case true =>
+        mongoJsonRepository.updateMany(target.toJson, changes.toJson, upsert).unsafeRunSync() match {
+          case Left(mongoError) => throw new Exception(s"MONGO EXCEPTION: MongoCasbahRepository.update($target, $changes): (UpdateMany) $mongoError")
+          case Right(updateResultJson) => CasbahWriteResult(updateResultJson)
+        }
+      case false =>
+        mongoJsonRepository.updateOne(target.toJson, changes.toJson, upsert).unsafeRunSync() match {
+          case Left(mongoError) => throw new Exception(s"MONGO EXCEPTION: MongoCasbahRepository.update($target, $changes): (UpdateOne) $mongoError")
+          case Right(updateResultJson) => CasbahWriteResult(updateResultJson)
+        }
     }
   }
 

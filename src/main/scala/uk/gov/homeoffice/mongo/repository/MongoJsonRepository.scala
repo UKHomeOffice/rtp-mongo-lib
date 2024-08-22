@@ -101,24 +101,31 @@ class MongoJsonRepository(_mongoStreamRepository :MongoStreamRepository) {
     }
   }
 
-  def updateOne(target :Json, changes :Json) :IO[MongoResult[Json]] = {
+  def countDocuments(json :Json): IO[MongoResult[Long]] = {
+    jsonToDocument(json) match {
+      case Left(mongoError) => IO(Left(mongoError))
+      case Right(document) => mongoStreamRepository.countDocuments(document)
+    }
+  }
+
+  def updateOne(target :Json, changes :Json, upsert :Boolean = false) :IO[MongoResult[Json]] = {
     (jsonToDocument(target), jsonToDocument(changes)) match {
       case (Left(exc), _) => IO(Left(exc))
       case (_, Left(exc)) => IO(Left(exc))
       case (Right(t), Right(c)) =>
-        mongoStreamRepository.updateOne(t, c).map {
+        mongoStreamRepository.updateOne(t, c, upsert).map {
           case Left(mongoError) => Left(mongoError)
           case Right(updateOneResult) => Right(resultToJson(updateOneResult))
         }
     }
   }
 
-  def updateMany(target :Json, changes :Json) :IO[MongoResult[Json]] = {
+  def updateMany(target :Json, changes :Json, upsert :Boolean = false) :IO[MongoResult[Json]] = {
     (jsonToDocument(target), jsonToDocument(changes)) match {
       case (Left(exc), _) => IO(Left(exc))
       case (_, Left(exc)) => IO(Left(exc))
       case (Right(t), Right(c)) =>
-        mongoStreamRepository.updateMany(t, c).map {
+        mongoStreamRepository.updateMany(t, c, upsert).map {
           case Left(mongoError) => Left(mongoError)
           case Right(updateManyResult) => Right(resultToJson(updateManyResult))
         }
