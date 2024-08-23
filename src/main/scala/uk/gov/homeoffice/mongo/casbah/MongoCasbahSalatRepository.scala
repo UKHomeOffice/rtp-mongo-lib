@@ -23,11 +23,11 @@ abstract class MongoCasbahSalatRepository[A](_mongoCasbahRepository :MongoCasbah
 
   val mongoCasbahRepository :MongoCasbahRepository = _mongoCasbahRepository
 
-  def toMongoObject(a :A) :MongoResult[MongoDBObject]
-  def fromMongoObject(mongoDBObject :MongoDBObject) :MongoResult[A]
+  def toMongoDBObject(a :A) :MongoResult[MongoDBObject]
+  def fromMongoDBObject(mongoDBObject :MongoDBObject) :MongoResult[A]
 
   def insert(a :A) :A = {
-    toMongoObject(a) match {
+    toMongoDBObject(a) match {
       case Left(mongoError) => throw new MongoException(s"MONGO EXCEPTION: $mongoError")
       case Right(mongoDBObject) =>
         mongoCasbahRepository.insertOne(mongoDBObject)
@@ -36,7 +36,7 @@ abstract class MongoCasbahSalatRepository[A](_mongoCasbahRepository :MongoCasbah
   }
 
   def save(a :A) :A = {
-    toMongoObject(a) match {
+    toMongoDBObject(a) match {
       case Left(mongoError) => throw new MongoException(s"MONGO EXCEPTION: $mongoError")
       case Right(mongoDBObject) =>
         mongoCasbahRepository.save(mongoDBObject)
@@ -44,19 +44,29 @@ abstract class MongoCasbahSalatRepository[A](_mongoCasbahRepository :MongoCasbah
     }
   }
 
-  def findOne(filter :MongoDBObject) :Option[A] = {
-    mongoCasbahRepository.findOne(filter).map { mongoDBObject =>
-      fromMongoObject(mongoDBObject) match {
+  def findOne(q :MongoDBObject) :Option[A] = {
+    mongoCasbahRepository.findOne(q).map { mongoDBObject =>
+      fromMongoDBObject(mongoDBObject) match {
         case Left(mongoError) => throw new MongoException(s"MONGO EXCEPTION: $mongoError")
         case Right(a) => a
       }
     }
   }
 
-  def find(filter :MongoDBObject) :DBCursor = mongoCasbahRepository.find(filter)
-  def find(filter :MongoDBObject, projection :MongoDBObject) :DBCursor = mongoCasbahRepository.find(filter, projection)
-  def aggregate(filter :List[MongoDBObject]) :List[MongoDBObject] = mongoCasbahRepository.aggregate(filter)
-  def update(target :MongoDBObject, changes :MongoDBObject) :CasbahWriteResult = mongoCasbahRepository.update(target, changes)
+  def find(q :MongoDBObject) :DBCursor[A] = mongoCasbahRepository.find(q).map { fromMongoDBObject(_) match {
+    case Left(mongoError) => throw new MongoException(s"MONGO EXCEPTION: $mongoError")
+    case Right(a) => a
+  }}
+  def find(q :MongoDBObject, p :MongoDBObject) :DBCursor[A] = mongoCasbahRepository.find(q, p).map { fromMongoDBObject(_) match {
+    case Left(mongoError) => throw new MongoException(s"MONGO EXCEPTION: $mongoError")
+    case Right(a) => a
+  }}
+  def aggregate(q :List[MongoDBObject]) :List[MongoDBObject] = mongoCasbahRepository.aggregate(q)
+  def count(q :MongoDBObject) :Long = mongoCasbahRepository.count(q)
+
+  def update(q :MongoDBObject, o :MongoDBObject, multi :Boolean = true, upsert :Boolean = false) :CasbahWriteResult =
+    mongoCasbahRepository.update(q, o, multi, upsert)
+
   def drop() :Unit = mongoCasbahRepository.drop()
   def remove(query :MongoDBObject) :CasbahDeleteResult = mongoCasbahRepository.remove(query)
 

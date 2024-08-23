@@ -32,11 +32,11 @@ trait CasbahPassthrough[A] {
 
   def insert(a :A) :A = collection.insert(a)
   def save(a :A) :A = collection.save(a)
-  def findOne(filter :MongoDBObject) :Option[A] = collection.findOne(filter)
-  def find(filter :MongoDBObject) :DBCursor = collection.find(filter)
-  def find(filter :MongoDBObject, projection :MongoDBObject) :DBCursor = collection.find(filter, projection)
-  def aggregate(filter :List[MongoDBObject]) :List[MongoDBObject] = collection.aggregate(filter)
+  def findOne(q :MongoDBObject) :Option[A] = collection.findOne(q)
+  def find(q :MongoDBObject) :DBCursor[A] = collection.find(q)
+  def find(q :MongoDBObject, p :MongoDBObject) :DBCursor[A] = collection.find(q, p)
+  def aggregate(q :List[MongoDBObject]) :List[MongoDBObject] = collection.aggregate(q)
   def drop() :Unit = collection.drop()
-  def remove(query :MongoDBObject) :CasbahDeleteResult = collection.remove(query)
+  def remove(q :MongoDBObject) :CasbahDeleteResult = collection.remove(q)
 
 }

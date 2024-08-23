@@ -85,9 +85,13 @@ object ExampleApp extends App {
    *
   */
 
-  val casbahRepo = new MongoCasbahSalatRepository[Book](new MongoCasbahRepository(new MongoJsonRepository(basicBookRepository))) {
-    def toMongoObject(a :Book) :MongoResult[MongoDBObject] = Right(MongoDBObject("author" -> a.author, "title" -> a.title, "isbn" -> a.isbn))
-    def fromMongoObject(mongoDBObject :MongoDBObject) :MongoResult[Book] =
+  val casbahRepo = new MongoCasbahRepository(new MongoJsonRepository(basicBookRepository))
+  val mongoRecord :Option[MongoDBObject] = casbahRepo.find(MongoDBObject("title" -> "The Davinci Code")).toList.headOption
+  println(s"Casbah MongoDBObject style access: $mongoRecord")
+
+  val salatRepo = new MongoCasbahSalatRepository[Book](casbahRepo) {
+    def toMongoDBObject(a :Book) :MongoResult[MongoDBObject] = Right(MongoDBObject("author" -> a.author, "title" -> a.title, "isbn" -> a.isbn))
+    def fromMongoDBObject(mongoDBObject :MongoDBObject) :MongoResult[Book] =
       (for {
         author <- mongoDBObject.getAs[String]("author")
         title <- mongoDBObject.getAs[String]("title")
@@ -98,12 +102,12 @@ object ExampleApp extends App {
       }
   }
 
-  val aliceInWonderland = casbahRepo.save(Book("Alice in Wonderland", "Carol", "678234832"))
+  val aliceInWonderland = salatRepo.save(Book("Alice in Wonderland", "Carol", "678234832"))
   val changed = aliceInWonderland.copy(isbn="86738921")
 
-  casbahRepo.save(changed)
+  salatRepo.save(changed)
 
-  val casbahFindResults :List[casbah.MongoDBObject] = casbahRepo.find(casbah.MongoDBObject("title" -> "Alice in Wonderland")).toList
+  val casbahFindResults :List[Book] = salatRepo.find(casbah.MongoDBObject("title" -> "Alice in Wonderland")).toList
   println(s"result count: ${casbahFindResults.length}")
   println(s"first result: ${casbahFindResults.headOption}")
 

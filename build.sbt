@@ -47,9 +47,9 @@ publishTo := {
   Some("release"  at artifactory + "artifactory/libs-release-local")
 }
 
-publishArtifact in (Test, packageBin) := true
-publishArtifact in (Test, packageDoc) := true
-publishArtifact in (Test, packageSrc) := true
+Test / packageBin / publishArtifact := true
+Test / packageDoc / publishArtifact := true
+Test / packageSrc / publishArtifact := true
 
 fork in run := true
 fork in test := true

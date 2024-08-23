@@ -9,5 +9,6 @@ case class CasbahWriteResult(result :Json) {
   def getMatchedCount() :Int = result.hcursor.downField("getMatchedCount").as[Int].toOption.get
   def getModifiedCount() :Int = result.hcursor.downField("getModifiedCount").as[Int].toOption.get
   def getN() :Int = result.hcursor.downField("getModifiedCount").as[Int].toOption.get
+  def isUpdateOfExisting() :Boolean = (getMatchedCount() > 1)
 }
 

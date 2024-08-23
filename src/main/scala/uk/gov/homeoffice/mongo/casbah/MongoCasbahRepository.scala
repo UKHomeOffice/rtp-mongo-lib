@@ -46,7 +46,7 @@ class MongoCasbahRepository(_mongoJsonRepository :MongoJsonRepository) {
     }
   }
 
-  def find(filter :MongoDBObject) :DBCursor = {
+  def find(filter :MongoDBObject) :DBCursor[MongoDBObject] = {
     def stripErrors(in :MongoResult[Json]) = in match {
       case Left(mongoError) => throw new MongoException(s"MONGO EXCEPTION: MongoCasbahRepository.find($filter): $mongoError")
       case Right(json) => MongoDBObject(json)
@@ -55,7 +55,7 @@ class MongoCasbahRepository(_mongoJsonRepository :MongoJsonRepository) {
     new DBCursor(resultList)
   }
 
-  def find(filter :MongoDBObject, projection :MongoDBObject) :DBCursor = {
+  def find(filter :MongoDBObject, projection :MongoDBObject) :DBCursor[MongoDBObject] = {
     def stripErrors(in :MongoResult[Json]) = in match {
       case Left(mongoError) => throw new MongoException(s"MONGO EXCEPTION: MongoCasbahRepository.find($filter, $projection): $mongoError")
       case Right(json) => MongoDBObject(json)

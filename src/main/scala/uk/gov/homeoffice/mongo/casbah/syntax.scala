@@ -1,6 +1,7 @@
 package uk.gov.homeoffice.mongo.casbah
 
 import scala.reflect.ClassTag
+import org.joda.time.DateTime
 
 object syntax {
 
@@ -10,6 +11,7 @@ object syntax {
 
   implicit class SyntaxOps(val underlying :String) extends AnyVal {
     def `$set`[A](in :(String, A)*) :MongoDBObject = MongoDBObject(underlying -> MongoDBObject("$set" -> MongoDBObject(in :_*)))
+    def `$unset`[A](in :(String, A)*) :MongoDBObject = MongoDBObject(underlying -> MongoDBObject("$unset" -> MongoDBObject(in :_*)))
 
     def `$eq`[A](in :(String, A)*) :MongoDBObject = MongoDBObject(underlying -> MongoDBObject("$eq" -> in))
     def `$eq`[A](in :A) :MongoDBObject = MongoDBObject(underlying -> MongoDBObject("$eq" -> in))
@@ -40,9 +42,14 @@ object syntax {
 
     def `$push`[A](in :(String, A)*) :MongoDBObject = MongoDBObject(underlying -> MongoDBObject("$push" -> in))
     def `$push`[A](in :A) :MongoDBObject = MongoDBObject(underlying -> MongoDBObject("$push" -> in))
+
+    def `$each`[A](in :(String, A)*) :MongoDBObject = MongoDBObject(underlying -> MongoDBObject("$each" -> in))
+    def `$each`[A](in :A) :MongoDBObject = MongoDBObject(underlying -> MongoDBObject("$each" -> in))
   }
 
   def `$set`[A](in :(String, A)*) :MongoDBObject = MongoDBObject("$set" -> MongoDBObject(in :_*))
+  def `$unset`[A](in :(String, A)*) :MongoDBObject = MongoDBObject("$unset" -> MongoDBObject(in :_*))
+
   def `$eq`[A](in :(String, A)*) :MongoDBObject = MongoDBObject("$eq" -> MongoDBObject(in :_*))
 
   def `$and`(in :MongoDBObject*) :MongoDBObject = MongoDBObject("$and" -> in.toArray[MongoDBObject])
@@ -64,8 +71,9 @@ object syntax {
 
   def `$push`[A](in :(String, A)*) :MongoDBObject = MongoDBObject("$push" -> in)
 
-  // TODO: untested and probably not working as A => Obj / Json not defined. Only here from compilation atm
-  def dateRangeQuery[A](from :Option[A], to :Option[A]) :Option[MongoDBObject] = (from, to) match {
+  def `$each`[A](in :(String, A)*) :MongoDBObject = MongoDBObject("$each" -> in)
+
+  def dateRangeQuery(from :Option[DateTime], to :Option[DateTime]) :Option[MongoDBObject] = (from, to) match {
     case (None, None) => None
     case (Some(f), None) => Some(MongoDBObject("$gte" -> f))
     case (None, Some(t)) => Some(MongoDBObject("$lte" -> t))
