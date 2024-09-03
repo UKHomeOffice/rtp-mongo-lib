@@ -61,8 +61,8 @@ class MongoDBObject(init :mutable.Map[String, AnyRef] = mutable.Map[String, AnyR
     }
   }
 
-  def getAsOrElse[A](field :String, default :() => A) :A =
-    getAs[A](field).getOrElse(default())
+  def getAsOrElse[A](field :String, default :A) :A =
+    getAs[A](field).getOrElse(default)
 
   def iterator() :Iterator[(String, AnyRef)] =
     data.iterator

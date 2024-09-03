@@ -73,7 +73,7 @@ object syntax {
 
   def `$each`[A](in :(String, A)*) :MongoDBObject = MongoDBObject("$each" -> in)
 
-  def dateRangeQuery(from :Option[DateTime], to :Option[DateTime]) :Option[MongoDBObject] = (from, to) match {
+  def dateRangeQuery(from :Option[DateTime] = None, to :Option[DateTime] = None) :Option[MongoDBObject] = (from, to) match {
     case (None, None) => None
     case (Some(f), None) => Some(MongoDBObject("$gte" -> f))
     case (None, Some(t)) => Some(MongoDBObject("$lte" -> t))
