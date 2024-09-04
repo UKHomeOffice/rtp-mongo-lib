@@ -94,4 +94,9 @@ class MongoStreamRepository(
   def drop() :IO[MongoResult[Unit]] = {
     futureToIOMongoResult(collection.drop().toFuture())
   }
+
+  def distinct(fieldName :String, query :Document) :fs2.Stream[IO, MongoResult[String]] = {
+    val qry = collection.distinct[String](fieldName, query)
+    fromDirectObservableString(qry)
+  }
 }

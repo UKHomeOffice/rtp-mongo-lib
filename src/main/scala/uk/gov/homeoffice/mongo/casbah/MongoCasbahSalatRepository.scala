@@ -69,5 +69,6 @@ abstract class MongoCasbahSalatRepository[A](_mongoCasbahRepository :MongoCasbah
 
   def drop() :Unit = mongoCasbahRepository.drop()
   def remove(query :MongoDBObject) :CasbahDeleteResult = mongoCasbahRepository.remove(query)
+  def distinct(fieldName :String, q :MongoDBObject) :List[String] = mongoCasbahRepository.distinct(fieldName, q)
 
 }

@@ -32,6 +32,26 @@ object MongoHelpers {
     } yield { qnt }
   }
 
+  def fromDirectObservableString(observable :Observable[String]) :fs2.Stream[IO, MongoResult[String]] = {
+    import cats.effect.std.{Dispatcher, Queue}
+    import cats.effect.implicits._
+
+    for {
+      d <- fs2.Stream.resource(Dispatcher.sequential[IO])
+      q <- fs2.Stream.eval(Queue.unbounded[IO, Option[MongoResult[String]]])
+      _ <- fs2.Stream.suspend {
+        def enqueue(v: Option[MongoResult[String]]): Unit = d.unsafeRunAndForget(q.offer(v))
+        observable.subscribe(new Observer[String] {
+          override def onNext(t: String): Unit = enqueue(Some(Right(t)))
+          override def onError(throwable: Throwable): Unit = enqueue(Some(Left(MongoError(s"Streaming error: ${throwable}"))))
+          override def onComplete(): Unit = enqueue(None)
+        })
+        fs2.Stream.emit(())
+      }
+      qnt <- fs2.Stream.fromQueueNoneTerminated(q)
+    } yield { qnt }
+  }
+
   def futureToIO[A](future :scala.concurrent.Future[A]) :IO[A] =
     IO.fromFuture(IO(future))
 

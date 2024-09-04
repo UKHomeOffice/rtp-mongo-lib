@@ -140,4 +140,14 @@ class MongoCasbahRepository(_mongoJsonRepository :MongoJsonRepository) {
       case Right(message) => println(s"Adding unique index result: $message")
     }
   }
+
+  def distinct(fieldName :String, filter :MongoDBObject) :List[String] = {
+    def stripErrors(in :MongoResult[String]) = in match {
+      case Left(mongoError) => throw new MongoException(s"MONGO EXCEPTION: MongoCasbahRepository.distinct($fieldName, $filter): $mongoError")
+      case Right(string) => string
+    }
+    val resultList :List[String] = mongoJsonRepository.distinct(fieldName, filter.toJson).map(a => stripErrors(a)).compile.toList.unsafeRunSync()
+    //new DBCursor(resultList)
+    resultList
+  }
 }

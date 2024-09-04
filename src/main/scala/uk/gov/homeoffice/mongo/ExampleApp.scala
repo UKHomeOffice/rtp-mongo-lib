@@ -117,6 +117,8 @@ object ExampleApp extends App {
   testObj.put("deleted" -> false)
   testObj.put("_id" -> "12121")
 
+  casbahRepo.distinct("title", MongoDBObject("isbn" -> MongoDBObject("$ne" -> "678234832"))).toList.foreach { e => println(s"DISTINCT TITLES: $e") }
+
   println("test app finished")
 
 }

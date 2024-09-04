@@ -157,4 +157,13 @@ class MongoJsonRepository(_mongoStreamRepository :MongoStreamRepository) {
       }
     }
   }
+
+  def distinct(fieldName :String, filter :Json) :fs2.Stream[IO, MongoResult[String]] = {
+    jsonToDocument(filter) match {
+      case Left(mongoError) => fs2.Stream.emit[IO, MongoResult[String]](Left(mongoError))
+      case Right(docFilter) =>
+        println(s"EXECUTING JSON ($fieldName): $filter")
+        mongoStreamRepository.distinct(fieldName, docFilter)
+    }
+  }
 }
