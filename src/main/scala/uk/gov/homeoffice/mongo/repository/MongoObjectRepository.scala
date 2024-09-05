@@ -52,15 +52,8 @@ abstract class MongoObjectRepository[A](_mongoJsonRepository :MongoJsonRepositor
     }
   }
 
-  def find(filter :Json) :fs2.Stream[IO, MongoResult[A]] = {
-    mongoJsonRepository.find(filter).map {
-      case Left(mongoError) => Left(mongoError)
-      case Right(json) => jsonToObject(json) match {
-        case Left(mongoError) => Left(mongoError)
-        case Right(a) => Right(a)
-      }
-    }
-  }
+  def find(filter :Json) :ObjectObservable[A] =
+    new ObjectObservableImpl[A](mongoJsonRepository.find(filter), jsonToObject)
 
   def all() :fs2.Stream[IO, MongoResult[A]] = {
     mongoJsonRepository.all().map {

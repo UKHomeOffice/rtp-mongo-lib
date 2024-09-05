@@ -10,7 +10,7 @@ import org.mongodb.scala.bson.Document
 import org.mongodb.scala.model.Field
 import org.mongodb.scala.model.Filters.or
 
-import io.circe.Json
+import io.circe.{Json, JsonObject}
 import io.circe.parser._
 import scala.util.Try
 
@@ -35,16 +35,31 @@ class MongoJsonRepository(_mongoStreamRepository :MongoStreamRepository) {
   }
 
   def resultToJson(result :InsertOneResult) :Json = Json.obj(
-    "getInsertedId" -> Json.fromString(result.getInsertedId().toString),
+    "getInsertedId" -> Json.obj("$oid" -> Json.fromString(result.getInsertedId().asObjectId().getValue().toHexString)),
     "wasAcknowledged" -> Json.fromBoolean(result.wasAcknowledged)
   )
 
-  def resultToJson(result :UpdateResult) :Json = Json.obj(
-    "getUpsertedId" -> Json.fromString(Option(result.getUpsertedId()).map(_.toString).getOrElse("")),
-    "getMatchedCount" -> Json.fromLong(result.getMatchedCount()),
-    "getModifiedCount" -> Json.fromLong(result.getModifiedCount()),
-    "wasAcknowledged" -> Json.fromBoolean(result.wasAcknowledged)
-  )
+  def resultToJson(result :UpdateResult) :io.circe.Json = {
+    import io.circe.syntax._
+
+    println(s"GOT $result")
+
+    val baseJsObj :io.circe.JsonObject = io.circe.JsonObject(
+      "getMatchedCount" -> Json.fromLong(result.getMatchedCount()),
+      "getModifiedCount" -> Json.fromLong(result.getModifiedCount()),
+      "wasAcknowledged" -> Json.fromBoolean(result.wasAcknowledged)
+    )
+
+    println(s"Made: $baseJsObj")
+    Option(result.getUpsertedId()) match {
+      case Some(upsertedId) =>
+        val jsWithId = baseJsObj.add("getUpsertedId", Json.obj("$oid" -> Json.fromString(upsertedId.asObjectId().getValue().toHexString())))
+        println(s"Id added: $jsWithId")
+        jsWithId.asJson
+      case None => baseJsObj.asJson
+    }
+
+  }
 
   def insertOne(json :Json) :IO[MongoResult[Json]] = {
     jsonToDocument(json) match {
@@ -80,17 +95,12 @@ class MongoJsonRepository(_mongoStreamRepository :MongoStreamRepository) {
     }
   }
 
-  def find(json :Json) :fs2.Stream[IO, MongoResult[Json]] = {
+  def find(json :Json) :JsonObservable = {
     jsonToDocument(json) match {
-      case Left(mongoError) => fs2.Stream.emit[IO, MongoResult[Json]](Left(mongoError))
+      case Left(mongoError) => new JsonErrorObservable(mongoError)
       case Right(document) =>
         println(s"EXECUTING JSON: $json")
-        mongoStreamRepository.find(document).map {
-          case Left(mongoError) => Left(mongoError)
-          case Right(document) =>
-            println(s"DOCUMENT RETURNED: $document")
-            documentToJson(document)
-      }
+        new JsonObservableImpl(mongoStreamRepository.find(document), jsonToDocument, documentToJson)
     }
   }
 

@@ -46,23 +46,11 @@ class MongoCasbahRepository(_mongoJsonRepository :MongoJsonRepository) {
     }
   }
 
-  def find(filter :MongoDBObject) :DBCursor[MongoDBObject] = {
-    def stripErrors(in :MongoResult[Json]) = in match {
-      case Left(mongoError) => throw new MongoException(s"MONGO EXCEPTION: MongoCasbahRepository.find($filter): $mongoError")
-      case Right(json) => MongoDBObject(json)
-    }
-    val resultList :List[MongoDBObject] = mongoJsonRepository.find(filter.toJson).map(a => stripErrors(a)).compile.toList.unsafeRunSync()
-    new DBCursor(resultList)
-  }
+  def find(filter :MongoDBObject) :DBCursor[MongoDBObject] =
+    new DBCursorMongoDBObjectImpl(mongoJsonRepository.find(filter.toJson))
 
-  def find(filter :MongoDBObject, projection :MongoDBObject) :DBCursor[MongoDBObject] = {
-    def stripErrors(in :MongoResult[Json]) = in match {
-      case Left(mongoError) => throw new MongoException(s"MONGO EXCEPTION: MongoCasbahRepository.find($filter, $projection): $mongoError")
-      case Right(json) => MongoDBObject(json)
-    }
-    val resultList :List[MongoDBObject] = mongoJsonRepository.find(filter.toJson).map(a => stripErrors(a)).compile.toList.unsafeRunSync()
-    new DBCursor(resultList)
-  }
+  def find(filter :MongoDBObject, projection :MongoDBObject) :DBCursor[MongoDBObject] =
+    find(filter).projection(projection)
 
   def count(filter :MongoDBObject) :Long = {
     mongoJsonRepository.countDocuments(filter.toJson).unsafeRunSync() match {

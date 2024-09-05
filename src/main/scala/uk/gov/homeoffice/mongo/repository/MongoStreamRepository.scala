@@ -45,22 +45,42 @@ class MongoStreamRepository(
       .toList
       .asJava
 
-    val searchDoc = new BsonDocument(elems)
-    val replaceOptions = new ReplaceOptions().upsert(true)
+    /*
+     * Important: If elems ends up being empty because the document
+     * you're saving doesn't have any primary key fields, replaceOne
+     * searches on {} meaning it replaces _any_ value (aka the first db
+     * row it counters!)
+     *
+     * Hence, if this happens we switch to insertOne here.
+    */
+    (elems.isEmpty) match {
+      case true =>
+        insertOne(document).map {
+          case Left(mongoError) => Left(mongoError)
+          /* convert insertResult to updateResult */
+          case Right(insertResult) if insertResult.wasAcknowledged =>
+           Right(UpdateResult.acknowledged(0, 1, insertResult.getInsertedId()))
+          case Right(insertResult) if !insertResult.wasAcknowledged =>
+           Right(UpdateResult.unacknowledged())
+        }
+      case false =>
+        val searchDoc = new BsonDocument(elems)
+        val replaceOptions = new ReplaceOptions().upsert(true)
 
-    futureToIOMongoResult { collection.replaceOne(
-      searchDoc,
-      document,
-      replaceOptions
-    ).toSingle().toFuture() }
+        futureToIOMongoResult { collection.replaceOne(
+          searchDoc,
+          document,
+          replaceOptions
+        ).toSingle().toFuture() }
+    }
   }
 
   def findOne(query :Document) :IO[MongoResult[Option[Document]]] =
     futureToIOMongoResult(collection.find(query).toSingle().toFutureOption())
 
-  def find(query :Document) :fs2.Stream[IO, MongoResult[Document]] = {
+  def find(query :Document) :StreamObservable = {
     val qry = collection.find(query)
-    fromObservable(qry)
+    new StreamObservable(qry)
   }
 
   def all() :fs2.Stream[IO, MongoResult[Document]] = {

@@ -33,13 +33,16 @@ object ExampleApp extends App {
     "hello" -> true
   )).head(), scala.concurrent.duration.Duration.Inf)
 
+  val retval = globalDatabaseConnection.mongoCollection("exampleLogins").find[Document](Document.empty).sort(Document("hello" -> 1)).limit(1).toSingle().toFutureOption()
+  println("search with delay returned: " + scala.concurrent.Await.result(retval, scala.concurrent.duration.Duration.Inf))
+
   // turn a collection into a repository and gain access to fs2 features.
   val basicBookRepository = new MongoStreamRepository(globalDatabaseConnection, "books", List("_id"))
 
   val allBooks = basicBookRepository.all().compile.toList.unsafeRunSync()
   println(s"All Books: ${allBooks}")
 
-  val miceAndMen = basicBookRepository.find(Document("title" -> "Mice and Men")).compile.toList.unsafeRunSync()
+  val miceAndMen = basicBookRepository.find(Document("title" -> "Mice and Men")).toFS2Stream().compile.toList.unsafeRunSync()
   println(s"Search for one book: ${miceAndMen}")
 
   /*

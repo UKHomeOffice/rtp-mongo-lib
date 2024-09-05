@@ -51,6 +51,12 @@ class MongoDBObject(init :mutable.Map[String, AnyRef] = mutable.Map[String, AnyR
       case m if lookahead(m, "$numberLong").isDefined => lookahead(m, "$numberLong").flatMap {
         case longStr => Try(longStr.asInstanceOf[String].toLong).toOption
       }
+      case i if lookahead(i, "$numberInt").isDefined => lookahead(i, "$numberInt").flatMap {
+        case intStr => Try(intStr.asInstanceOf[String].toInt).toOption
+      }
+      case f if lookahead(f, "$numberDouble").isDefined => lookahead(f, "$numberDouble").flatMap {
+        case doubleStr => Try(doubleStr.asInstanceOf[String].toDouble).toOption
+      }
       case v :Vector[_] => Some(MongoDBList(v.asInstanceOf[Vector[AnyRef]]))
       case x => Some(x)
     }
@@ -151,6 +157,9 @@ class MongoDBObject(init :mutable.Map[String, AnyRef] = mutable.Map[String, AnyR
         case s if s.isInstanceOf[String] => Json.fromString(s.asInstanceOf[String])
         case i if i.isInstanceOf[Int] => Json.fromInt(i.asInstanceOf[Int])
         case l if l.isInstanceOf[Long] => Json.obj("$numberLong" -> Json.fromString(l.asInstanceOf[Long].toString))
+        case d if d.isInstanceOf[Double] => Json.fromDoubleOrNull(d.asInstanceOf[Double])
+        case f if f.isInstanceOf[Float] => Json.fromFloatOrNull(f.asInstanceOf[Float])
+        case b if b.isInstanceOf[BigDecimal] => Json.fromBigDecimal(b.asInstanceOf[BigDecimal])
         case l if l.isInstanceOf[Boolean] => Json.fromBoolean(l.asInstanceOf[Boolean])
         case d if d.isInstanceOf[java.util.Date] => Json.obj("$date" -> Json.fromString(d.toString())) // TODO: Correct ISO formatting
         case d if d.isInstanceOf[DateTime] => Json.obj("$date" -> Json.fromString(d.toString())) // TODO: Correct ISO formatting
@@ -169,7 +178,7 @@ class MongoDBObject(init :mutable.Map[String, AnyRef] = mutable.Map[String, AnyR
           val inner = o.asInstanceOf[Map[String, AnyRef]]
           val keyPairs :List[(String, Json)] = inner.map { case (k, v) => (k -> valueToJson(v)) }.toList
           Json.obj(keyPairs :_*)
-        case x => Json.fromString(x.toString())
+        case x => throw new Exception(s"MONGO EXCEPTION: primitive type stringified: ${Json.fromString(x.toString())}")
       }
     }
 
@@ -229,6 +238,7 @@ object MongoDBObject {
         case m if m.isObject && lookahead(m, "$date").isDefined => lookahead(m, "$date").flatMap { str => scala.util.Try(DateTime.parse(str).asInstanceOf[AnyRef]).toOption }
         case m if m.isObject && lookahead(m, "$oid").isDefined => lookahead(m, "$oid").flatMap { str => scala.util.Try(new ObjectId(str).asInstanceOf[AnyRef]).toOption }
         case m if m.isObject && lookahead(m, "$numberLong").isDefined => lookahead(m, "$numberLong").flatMap { str => scala.util.Try(str.toLong.asInstanceOf[AnyRef]).toOption }
+        case i if i.isObject && lookahead(i, "$numberInt").isDefined => lookahead(i, "$numberInt").flatMap { str => scala.util.Try(str.toInt.asInstanceOf[AnyRef]).toOption }
         case m if m.isObject =>
           val jsonList :List[(String, Json)] = m.asObject.get.toList
           val objList :List[(String, AnyRef)] = jsonList.map { case (key, jsVal) =>
@@ -238,8 +248,8 @@ object MongoDBObject {
             }
           }.flatten
 
-          val map :mutable.Map[String, AnyRef] = mutable.Map(objList.toMap.toSeq :_*)
-          Some(map.asInstanceOf[AnyRef])
+          val innerDBObject :MongoDBObject = MongoDBObject(objList :_*)
+          Some(innerDBObject.asInstanceOf[AnyRef])
         case x => Some(x.toString.asInstanceOf[AnyRef])
       }
     }
@@ -267,7 +277,6 @@ object MongoDBObject {
     val dbObj = new MongoDBObject()
     in.foreach { case (key, value) =>
       value match {
-        //case dt if dt.isInstanceOf[java.util.Date] => dbObj += (key, Map[String, AnyRef]("$date" -> dt.toString))
         case obj => dbObj += (key, obj.asInstanceOf[AnyRef])
       }
     }
