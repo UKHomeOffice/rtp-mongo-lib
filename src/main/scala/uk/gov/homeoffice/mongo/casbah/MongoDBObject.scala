@@ -8,6 +8,7 @@ import io.circe._
 import scala.util.Try
 import org.bson.types.ObjectId
 import org.joda.time.DateTime
+import scala.util.matching.Regex
 
 class MongoDBObject(init :mutable.Map[String, AnyRef] = mutable.Map[String, AnyRef]()) {
 
@@ -86,6 +87,7 @@ class MongoDBObject(init :mutable.Map[String, AnyRef] = mutable.Map[String, AnyR
       case v if v.isInstanceOf[DateTime] => MongoDBObject("$date" -> value.asInstanceOf[DateTime].toString())
       case v if v.isInstanceOf[Long] => MongoDBObject("$numberLong" -> value.asInstanceOf[Long].toString())
       case v if v.isInstanceOf[ObjectId] => MongoDBObject("$oid" -> v.asInstanceOf[ObjectId].toHexString())
+      case v if v.isInstanceOf[Regex] => MongoDBObject("$regex" -> v.asInstanceOf[Regex].pattern)
       case v => v.asInstanceOf[AnyRef]
     }
 
@@ -163,6 +165,7 @@ class MongoDBObject(init :mutable.Map[String, AnyRef] = mutable.Map[String, AnyR
         case l if l.isInstanceOf[Boolean] => Json.fromBoolean(l.asInstanceOf[Boolean])
         case d if d.isInstanceOf[java.util.Date] => Json.obj("$date" -> Json.fromString(d.toString())) // TODO: Correct ISO formatting
         case d if d.isInstanceOf[DateTime] => Json.obj("$date" -> Json.fromString(d.toString())) // TODO: Correct ISO formatting
+        case d if d.isInstanceOf[Regex] => Json.obj("$regex" -> Json.fromString(d.asInstanceOf[Regex].pattern.pattern)) // TODO: Set pattern
         case m if m.isInstanceOf[MongoDBObject] => m.asInstanceOf[MongoDBObject].toJson()
         // TODO: Support java.time.ZonedDateTime + LocalDate
         case d if d.isInstanceOf[ObjectId] => Json.obj("$oid" -> Json.fromString(d.toString()))
@@ -170,15 +173,30 @@ class MongoDBObject(init :mutable.Map[String, AnyRef] = mutable.Map[String, AnyR
           val arr :List[AnyRef] = l.asInstanceOf[MongoDBList[AnyRef]].toList
           val jsonArr :List[Json] = arr.map { item :AnyRef => valueToJson(item) }
           Json.arr(jsonArr :_*)
+        // handle all collections
         case l if l.isInstanceOf[Array[_]] =>
           val arr = l.asInstanceOf[Array[AnyRef]]
           val jsonArr = arr.map { item :AnyRef => valueToJson(item) }
+          Json.arr(jsonArr :_*)
+        case l if l.isInstanceOf[List[_]] =>
+          val arr = l.asInstanceOf[List[AnyRef]]
+          val jsonArr = arr.map { item :AnyRef => valueToJson(item) }
+          Json.arr(jsonArr :_*)
+        case l if l.isInstanceOf[Seq[_]] =>
+          val arr = l.asInstanceOf[Seq[AnyRef]]
+          val jsonArr = arr.map { item :AnyRef => valueToJson(item) }.toList
+          Json.arr(jsonArr :_*)
+        case l if l.isInstanceOf[Set[_]] =>
+          val arr = l.asInstanceOf[Set[AnyRef]]
+          val jsonArr = arr.map { item :AnyRef => valueToJson(item) }.toList
           Json.arr(jsonArr :_*)
         case o if o.isInstanceOf[Map[_, _]] =>
           val inner = o.asInstanceOf[Map[String, AnyRef]]
           val keyPairs :List[(String, Json)] = inner.map { case (k, v) => (k -> valueToJson(v)) }.toList
           Json.obj(keyPairs :_*)
-        case x => throw new Exception(s"MONGO EXCEPTION: primitive type stringified: ${Json.fromString(x.toString())}")
+        case s if s.isInstanceOf[Some[_]] =>
+          valueToJson(s.asInstanceOf[Some[AnyRef]].get)
+        case x => throw new Exception(s"MONGO EXCEPTION: primitive type stringified: ${Json.fromString(x.toString())} ($data)")
       }
     }
 
