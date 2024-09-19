@@ -23,7 +23,7 @@ class DBObject(val mongoDBObject :MongoDBObject) {
     }
 
     val o = mongoDBObject.as[Object](key)
-    val b = o match {
+    o match {
       case s :Some[_] => s.asInstanceOf[Some[AnyRef]].get.asInstanceOf[Object]
       case oid :ObjectId => oid.asInstanceOf[ObjectId]
       /* warning, can throw NoneException */
@@ -33,13 +33,9 @@ class DBObject(val mongoDBObject :MongoDBObject) {
         case j if lookahead(j, "$numberLong").isDefined => lookahead(j, "$numberLong").map { innerValue => new DateTime(innerValue.asInstanceOf[String].toLong) }.get
       }}.get
       case m if lookahead(m, "$numberLong").isDefined => lookahead(m, "$numberLong").map { longStr => longStr.asInstanceOf[String].toLong }.get.asInstanceOf[Object]
-      case v :Vector[_] =>
-        println(s"In the vector branch with $v ${v.length}")
-        MongoDBList(v.asInstanceOf[Vector[AnyRef]]).asInstanceOf[Object]
+      case v :Vector[_] => MongoDBList(v.asInstanceOf[Vector[AnyRef]]).asInstanceOf[Object]
       case x => x.asInstanceOf[Object]
     }
-    println(s"DBObject.get($key) returned $b (${b.getClass}) $o")
-    b
   }
 
   def keySet() :java.util.Set[String] = mongoDBObject.keySet.asJava

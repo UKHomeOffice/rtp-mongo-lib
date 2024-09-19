@@ -25,8 +25,10 @@ class MongoJsonRepository(_mongoStreamRepository :MongoStreamRepository) {
   val mongoStreamRepository :MongoStreamRepository = _mongoStreamRepository
 
   def jsonToDocument(json :Json) :MongoResult[Document] = {
-    println(s"CONVERTING $json INTO ${json.deepDropNullValues.spaces4}")
-    Try(Document(json.deepDropNullValues.spaces4)).toEither.left.map(exc => MongoError(exc.getMessage()))
+    Try(Document(json.deepDropNullValues.spaces4)).toEither match {
+      case Left(exc) => Left(MongoError(exc.getMessage()))
+      case Right(doc) => Right(doc)
+    }
   }
 
   def documentToJson(document :Document) :MongoResult[Json] = {
@@ -34,15 +36,23 @@ class MongoJsonRepository(_mongoStreamRepository :MongoStreamRepository) {
     parse(document.toJson(jsonWriterSettings)).left.map(exc => MongoError(exc.getMessage()))
   }
 
-  def resultToJson(result :InsertOneResult) :Json = Json.obj(
-    "getInsertedId" -> Json.obj("$oid" -> Json.fromString(result.getInsertedId().asObjectId().getValue().toHexString)),
-    "wasAcknowledged" -> Json.fromBoolean(result.wasAcknowledged)
-  )
+  def resultToJson(result :InsertOneResult) :Json = {
+    val id = result.getInsertedId() match {
+      case n if !Option(n).isDefined => Json.Null
+      case n if n.isNull => Json.Null
+      case oid if oid.isObjectId() => Json.fromString(oid.asObjectId().getValue().toHexString)
+      case i if i.isNumber => Json.fromInt(i.asNumber().asInt64.intValue)
+      case str => Json.fromString(str.asString().getValue())
+    }
+
+    Json.obj(
+      "getInsertedId" -> id,
+      "wasAcknowledged" -> Json.fromBoolean(result.wasAcknowledged)
+    )
+  }
 
   def resultToJson(result :UpdateResult) :io.circe.Json = {
     import io.circe.syntax._
-
-    println(s"GOT $result")
 
     val baseJsObj :io.circe.JsonObject = io.circe.JsonObject(
       "getMatchedCount" -> Json.fromLong(result.getMatchedCount()),
@@ -50,13 +60,12 @@ class MongoJsonRepository(_mongoStreamRepository :MongoStreamRepository) {
       "wasAcknowledged" -> Json.fromBoolean(result.wasAcknowledged)
     )
 
-    println(s"Made: $baseJsObj")
-    Option(result.getUpsertedId()) match {
-      case Some(upsertedId) =>
-        val jsWithId = baseJsObj.add("getUpsertedId", Json.obj("$oid" -> Json.fromString(upsertedId.asObjectId().getValue().toHexString())))
-        println(s"Id added: $jsWithId")
-        jsWithId.asJson
-      case None => baseJsObj.asJson
+    result.getUpsertedId() match {
+      case n if !Option(n).isDefined => baseJsObj.asJson
+      case n if n.isNull => baseJsObj.asJson
+      case oid if oid.isObjectId() => baseJsObj.add("getUpsertedId", Json.fromString(oid.asObjectId().getValue().toHexString)).asJson
+      case i if i.isNumber => baseJsObj.add("getUpsertedId", Json.fromInt(i.asNumber().asInt64.intValue)).asJson
+      case str => baseJsObj.add("getUpsertedId", Json.fromString(str.asString().getValue())).asJson
     }
 
   }
@@ -97,9 +106,10 @@ class MongoJsonRepository(_mongoStreamRepository :MongoStreamRepository) {
 
   def find(json :Json) :JsonObservable = {
     jsonToDocument(json) match {
-      case Left(mongoError) => new JsonErrorObservable(mongoError)
+      case Left(mongoError) =>
+        throw new Exception(s"mongoJsonRepository.find $mongoError ($json)")
+        new JsonErrorObservable(mongoError)
       case Right(document) =>
-        println(s"EXECUTING JSON: $json")
         new JsonObservableImpl(mongoStreamRepository.find(document), jsonToDocument, documentToJson)
     }
   }
@@ -168,11 +178,20 @@ class MongoJsonRepository(_mongoStreamRepository :MongoStreamRepository) {
     }
   }
 
+  def deleteMany(json :Json) :IO[MongoResult[DeleteResult]] = {
+    jsonToDocument(json) match {
+      case Left(mongoError) => IO(Left(mongoError))
+      case Right(document) => mongoStreamRepository.deleteMany(document).flatMap {
+        case Left(mongoError) => IO(Left(mongoError))
+        case Right(deleteResult) => IO(Right(deleteResult))
+      }
+    }
+  }
+
   def distinct(fieldName :String, filter :Json) :fs2.Stream[IO, MongoResult[String]] = {
     jsonToDocument(filter) match {
       case Left(mongoError) => fs2.Stream.emit[IO, MongoResult[String]](Left(mongoError))
       case Right(docFilter) =>
-        println(s"EXECUTING JSON ($fieldName): $filter")
         mongoStreamRepository.distinct(fieldName, docFilter)
     }
   }

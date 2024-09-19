@@ -21,7 +21,6 @@ class MongoCasbahRepositorySpec extends Specification {
   sequential
 
   val testConnection = TestMongo.testConnection()
-  println(s"MongoCasbahRepositorySpec using test database: ${testConnection.connectionString}")
 
   val casbahRepoTest = new MongoCasbahRepository(
     new MongoJsonRepository(

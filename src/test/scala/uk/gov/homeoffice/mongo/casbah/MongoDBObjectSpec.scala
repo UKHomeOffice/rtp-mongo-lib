@@ -39,6 +39,7 @@ class MongoDBObjectSpec extends Specification {
       m.get("long") must beSome(145l)
 
       m.getAs[Long]("long") must beSome(145l)
+      m.getAs[BigDecimal]("long") must beSome(145l)
       m.as[Long]("long") mustEqual 145l
     }
 

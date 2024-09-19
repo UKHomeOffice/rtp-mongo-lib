@@ -36,7 +36,10 @@ class DBCursorMongoDBObjectImpl(jsonObservable :JsonObservable) extends DBCursor
   def apply() :List[MongoDBObject] = jsonObservable.toFS2Stream().map {
     case Left(mongoError) => throw new Exception(s"MONGO EXCEPTION DBCursorMongoDBObject.apply: $mongoError")
     case Right(json) => MongoDBObject(json)
-  }.compile.toList.unsafeRunSync()
+  }.attempt.compile.toList.unsafeRunSync().map {
+    case Left(x) => Left(x)
+    case Right(e) => Right(e)
+    }.collect { case Right(e) => e }
 
   def toList() :List[MongoDBObject] = apply()
 
@@ -89,8 +92,12 @@ class DBCursorError[A](mongoError :MongoError) extends DBCursor[A] {
   def skip(n :Int) :DBCursor[A] = this
   def take(n :Int) :DBCursor[A] = limit(n)
 
-  def apply() :List[A] = throw new Exception(s"MONGO DB CURSOR EXCEPTION: $mongoError")
-  def toList() :List[A] = throw new Exception(s"MONGO DB CURSOR EXCEPTION: $mongoError")
+  def apply() :List[A] = {
+    throw new Exception(s"MONGO DB CURSOR EXCEPTION: $mongoError")
+  }
+  def toList() :List[A] = {
+    throw new Exception(s"MONGO DB CURSOR EXCEPTION: $mongoError")
+  }
 
   def map[B](fn :A => B) :DBCursor[B] = new DBCursorError[B](mongoError)
 }

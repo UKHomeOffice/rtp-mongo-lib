@@ -12,4 +12,6 @@ class MongoDBObjectBuilder(init :MongoDBObject = MongoDBObject.empty) {
   def putAll(other :MongoDBObject) :Unit = this.+=(other.data.toList :_*)
   def result() :MongoDBObject = obj
 
+  override def toString() :String = { s"MONGO DB OBJECT BUILDER: $obj" }
+
 }

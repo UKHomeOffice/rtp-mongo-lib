@@ -111,6 +111,11 @@ class MongoStreamRepository(
     futureToIOMongoResult(result.toSingle().toFuture())
   }
 
+  def deleteMany(query :Document) :IO[MongoResult[DeleteResult]] = {
+    val result = collection.deleteMany(query)
+    futureToIOMongoResult(result.toSingle().toFuture())
+  }
+
   def drop() :IO[MongoResult[Unit]] = {
     futureToIOMongoResult(collection.drop().toFuture())
   }

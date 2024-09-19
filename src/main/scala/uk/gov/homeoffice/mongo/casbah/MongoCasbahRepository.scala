@@ -64,21 +64,29 @@ class MongoCasbahRepository(_mongoJsonRepository :MongoJsonRepository) {
     val streamResponse :fs2.Stream[IO, MongoResult[Json]] = mongoJsonRepository.aggregate(jsonList)
     val resultList = streamResponse.compile.toList.unsafeRunSync()
     MongoHelpers.mongoResultCollect(resultList) match {
-      case Left(mongoError) => throw new MongoException(s"MONGO EXCEPTION: MongoCasbahRepository.aggregate($filter): $mongoError")
+      case Left(mongoError) =>
+        throw new MongoException(s"MONGO EXCEPTION: MongoCasbahRepository.aggregate($filter): $mongoError")
       case Right(listOfResults) => listOfResults.map(MongoDBObject.apply)
     }
   }
 
   def update(target :MongoDBObject, changes :MongoDBObject, multi: Boolean = true, upsert :Boolean = false) :CasbahWriteResult = {
+
+    // Lift raw replacements into $set automatically
+    val changesWithSet = changes.keySet.exists(_.startsWith("$")) match {
+      case true => changes
+      case false => MongoDBObject("$set" -> changes)
+    }
+
     multi match {
       case true =>
-        mongoJsonRepository.updateMany(target.toJson, changes.toJson, upsert).unsafeRunSync() match {
-          case Left(mongoError) => throw new Exception(s"MONGO EXCEPTION: MongoCasbahRepository.update($target, $changes): (UpdateMany) $mongoError")
+        mongoJsonRepository.updateMany(target.toJson, changesWithSet.toJson, upsert).unsafeRunSync() match {
+          case Left(mongoError) => throw new Exception(s"MONGO EXCEPTION: MongoCasbahRepository.update($target, $changesWithSet): (UpdateMany) $mongoError")
           case Right(updateResultJson) => CasbahWriteResult(updateResultJson)
         }
       case false =>
-        mongoJsonRepository.updateOne(target.toJson, changes.toJson, upsert).unsafeRunSync() match {
-          case Left(mongoError) => throw new Exception(s"MONGO EXCEPTION: MongoCasbahRepository.update($target, $changes): (UpdateOne) $mongoError")
+        mongoJsonRepository.updateOne(target.toJson, changesWithSet.toJson, upsert).unsafeRunSync() match {
+          case Left(mongoError) => throw new Exception(s"MONGO EXCEPTION: MongoCasbahRepository.update($target, $changesWithSet): (UpdateOne) $mongoError")
           case Right(updateResultJson) => CasbahWriteResult(updateResultJson)
         }
     }
@@ -90,15 +98,21 @@ class MongoCasbahRepository(_mongoJsonRepository :MongoJsonRepository) {
     .drop()
     .unsafeRunSync()
 
-  def remove(query :MongoDBObject) :CasbahDeleteResult =
-    mongoJsonRepository.deleteOne(query.toJson).unsafeRunSync() match {
-      case Left(mongoError) => throw new MongoException(mongoError.message)
-      /* TODO: make mongoJsonRepository jsonify the delete result for consistency */
-      case Right(deleteResult) => CasbahDeleteResult(Json.obj("getN" -> Json.fromLong(deleteResult.getDeletedCount)))
+  def remove(query :MongoDBObject, multi :Boolean = true) :CasbahDeleteResult =
+    multi match {
+      case false =>
+        mongoJsonRepository.deleteOne(query.toJson).unsafeRunSync() match {
+          case Left(mongoError) => throw new MongoException(mongoError.message)
+          case Right(deleteResult) => CasbahDeleteResult(Json.obj("getN" -> Json.fromLong(deleteResult.getDeletedCount)))
+        }
+      case true =>
+        mongoJsonRepository.deleteMany(query.toJson).unsafeRunSync() match {
+          case Left(mongoError) => throw new MongoException(mongoError.message)
+          case Right(deleteResult) => CasbahDeleteResult(Json.obj("getN" -> Json.fromLong(deleteResult.getDeletedCount)))
+        }
     }
 
   def ensureUniqueIndex(c :org.mongodb.scala.MongoCollection[Document], indexName :String, fieldNames :List[String]) :Unit = {
-    println(s"Ensuring Unique Index $indexName")
     implicit val ec: scala.concurrent.ExecutionContext = scala.concurrent.ExecutionContext.global
     import org.mongodb.scala.bson._
     def isEssentialIndex(d :Document) :Boolean = d.get("name").map(_ == BsonString(indexName)).getOrElse(false)
