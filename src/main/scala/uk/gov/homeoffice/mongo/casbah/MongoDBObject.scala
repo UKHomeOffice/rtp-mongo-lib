@@ -3,12 +3,16 @@ package uk.gov.homeoffice.mongo.casbah
 import scala.collection._
 
 import io.circe._
-// This is a cheap clone of Casbah's MongoDBObject
 
 import scala.util.Try
 import org.bson.types.ObjectId
 import org.joda.time.DateTime
 import scala.util.matching.Regex
+
+/* This is a cheap clone of Casbah's MongoDBObject. It allows callers to port to the modern
+ * driver without having to rewrite any database queries, hugely reducing effort. See the
+ * README for gotcha involved in using this object such as how dotted notation is used.
+*/
 
 class MongoDBObject(init :mutable.Map[String, AnyRef] = mutable.Map[String, AnyRef]()) {
 
@@ -116,15 +120,6 @@ class MongoDBObject(init :mutable.Map[String, AnyRef] = mutable.Map[String, AnyR
   def +=[A](key :String, value :A) :MongoDBObject = {
     if (value == null) return this
 
-    val writeValue :AnyRef = value match {
-      case v if v.isInstanceOf[DateTime] => MongoDBObject("$date" -> value.asInstanceOf[DateTime].toString())
-      case v if v.isInstanceOf[Long] => MongoDBObject("$numberLong" -> value.asInstanceOf[Long].toString())
-      case v if v.isInstanceOf[ObjectId] => MongoDBObject("$oid" -> v.asInstanceOf[ObjectId].toHexString())
-      case v if v.isInstanceOf[Regex] => MongoDBObject("$regex" -> v.asInstanceOf[Regex].pattern.pattern)
-      case v if v.isInstanceOf[DBObject] => v.asInstanceOf[DBObject].mongoDBObject
-      case v => v.asInstanceOf[AnyRef]
-    }
-
     data += (key -> value.asInstanceOf[AnyRef])
     this
   }
@@ -183,7 +178,6 @@ class MongoDBObject(init :mutable.Map[String, AnyRef] = mutable.Map[String, AnyR
         case d if d.isInstanceOf[Regex] => Json.obj("$regex" -> Json.fromString(d.asInstanceOf[Regex].pattern.pattern)) // TODO: Set pattern
         case m if m.isInstanceOf[MongoDBObject] => m.asInstanceOf[MongoDBObject].toJson()
         case m if m.isInstanceOf[DBObject] => m.asInstanceOf[DBObject].mongoDBObject.toJson()
-        // TODO: Support java.time.ZonedDateTime + LocalDate
         case d if d.isInstanceOf[ObjectId] => Json.obj("$oid" -> Json.fromString(d.toString()))
         case l if l.isInstanceOf[MongoDBList[_]] =>
           val arr :List[AnyRef] = l.asInstanceOf[MongoDBList[AnyRef]].toList
@@ -270,7 +264,6 @@ object MongoDBObject {
       json.hcursor.downField(fieldName).get[String](fieldName).toOption
 
     def jsonValueToObject(json :Json) :Option[AnyRef] = {
-      //if (json == null) return None
 
       json match {
         case j if j.isNumber => Some(j.asNumber.get.asInstanceOf[AnyRef])
@@ -282,9 +275,6 @@ object MongoDBObject {
               case Some(v) => v
               case None => o.asInstanceOf[Any].asInstanceOf[AnyRef]
             }
-            /* this actively upcasts primitives to AnyRefs.
-             * you cannot do Vector[AnyRef] with .asInstanceOf[Vector[AnyRef]] until you
-             * visit each element first */
             case r => r.asInstanceOf[AnyRef]
           }}
           Some(mongoDBObjectArray.asInstanceOf[Vector[AnyRef]])
@@ -338,8 +328,6 @@ object MongoDBObject {
     dbObj
   }
 
-  // In Casbah, the main type is DBObject and MongoDBObject is implicit
-  // Value class, so our representation takes quite a big detour from this.
   def apply(dbObject :DBObject) :MongoDBObject = {
     dbObject.mongoDBObject
   }

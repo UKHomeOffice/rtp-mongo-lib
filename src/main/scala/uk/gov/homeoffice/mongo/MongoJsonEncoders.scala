@@ -33,7 +33,6 @@ object MongoJsonEncoders {
       }
     }
 
-    // org.joda.time (TODO: Test)
     implicit val jodaDateTimeEncoder: Encoder[DateTime] = Encoder.encodeString.contramap[DateTime](_.toString)
     implicit val jodaDateTimeDecoder: Decoder[DateTime] = Decoder.decodeString.emapTry { str =>
       Try(DateTime.parse(str)) match {
@@ -171,21 +170,5 @@ object MongoJsonEncoders {
     }
   }
 
-  /* template for your jsonToObject and vice-versa to get Mongo style encodings or underlying types
-  class GenericEncoding(
-    implicit val localDateEncoder :Encoder[LocalDate],
-    implicit val localDateDecoder :Decoder[LocalDate],
-    implicit val zonedDateTimeEncoder :Encoder[ZonedDateTime],
-    implicit val zonedDateTimeDecoder :Decoder[ZonedDateTime],
-    implicit val numberLongEncoder :Encoder[Long],
-    implicit val numberLongDecoder :Decoder[Long],
-    implicit val numberIntEncoder :Encoder[Int],
-    implicit val numberIntDecoder :Decoder[Int]
-  ){
-
-      // put your enums, classes in here.
-    
-  }
-  */
 }
 

@@ -272,3 +272,7 @@ m.getAs[MongoDBObject]("hello").keySet() // does not include chalk when it shoul
 2. Callers should be wary that holding cursors may hold streams open for too long.
 
 3. We use DBCursor / StreamObservable classes to allow chaining operations. For instance `find(something).sort(something)` doesn't do the sort client side, it's done by the mongo server, as expected. However where the results come back as fs2 Streams, some errors result are reported upstream by replacing the returned stream with a Stream of one item which contains the error.
+
+### Importance of setting primaryKeys if using Casbah.save
+
+`save` only takes the new object to save. It doesn't know what it is replacing. It builds the target to replace from the `primaryKey` field. If this is incorrect, or if you call `save(s)` after changing a primary key field, it will not work as expected.

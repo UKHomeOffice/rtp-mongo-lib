@@ -49,13 +49,16 @@ class MongoDBObjectSpec extends Specification {
       m.get("cheese") must beNone
     }
 
-    //"getAs, with the wrong type, returns None" in {
+    /* This test is the desired behaviour but it currently isn't
+     * required so it is being left out of V1 of the new mongo drivers.
+    "getAs, with the wrong type, returns None" in {
 
-    //  val m :MongoDBObject = MongoDBObject.empty
-    //  m.put("long" -> 145l)
-    //  m.getAs[ObjectId]("long") must beNone
+      val m :MongoDBObject = MongoDBObject.empty
+      m.put("long" -> 145l)
+      m.getAs[ObjectId]("long") must beNone
 
-    //}
+    }
+    */
     
     "put will overwrite values" in {
       val m :MongoDBObject = MongoDBObject.empty
@@ -95,7 +98,8 @@ class MongoDBObjectSpec extends Specification {
       m.getAs[String]("hello.true.riffle") must beSome("test")
       m.getAs[String]("hello.chalk") must beSome(false)
 
-      // For better compatibility, make this work with chalk as well
+      // For better compatibility, we should improve dotted notation and make
+      // this return 'chalk' as well
       m.getAs[MongoDBObject]("hello").map (_.keySet) mustEqual Some(Set("true"))
     }
 
@@ -154,8 +158,7 @@ class MongoDBObjectSpec extends Specification {
 
       m.as[DateTime]("birthday").isEqual(new DateTime(1724165563932l)) must beTrue
 
-      // using dotted notation
-      // TODO: Fix
+      // Warning: Using dotted notation does not currently work in this scenario.
       //val m2 = MongoDBObject("birthday.$date.$numberLong" -> 1724165563932l.toString)
       //m2.as[DateTime]("birthday").isEqual(new DateTime(1724165563932l)) must beTrue
     }
@@ -173,7 +176,7 @@ class MongoDBObjectSpec extends Specification {
 
       m.getAs[Long]("noexist") must beNone
 
-      // For compatibility reasons make this work.
+      // Warning: This use of dotted notation is not currently supported
       //m.getAs[Long]("myLong.someInnerValue") must beNone
     }
 
@@ -320,13 +323,6 @@ class MongoDBObjectSpec extends Specification {
 
       mongoDBObject mustEqual MongoDBObject("slime" -> "wrap")
     }
-
-    /* TODO:
-    
-    "java.util.Date can be used in conjunction with dates and getAs" in { }
-    "java.time.ZonedDateTime can be used in conjunction with dates and getAs {}"
-
-    */
 
   }
 
