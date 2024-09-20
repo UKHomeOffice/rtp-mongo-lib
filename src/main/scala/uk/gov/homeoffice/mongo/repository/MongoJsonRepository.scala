@@ -3,7 +3,7 @@ package uk.gov.homeoffice.mongo.repository
 import cats.effect.IO
 import cats.implicits._
 import com.mongodb.client.model.ReplaceOptions
-import com.typesafe.scalalogging.StrictLogging
+import com.typesafe.scalalogging.Logger
 import org.bson.json._
 import org.bson.conversions.Bson
 import org.mongodb.scala.bson.Document
@@ -22,13 +22,16 @@ import uk.gov.homeoffice.mongo.model.syntax._
 
 class MongoJsonRepository(_mongoStreamRepository :MongoStreamRepository) {
 
+  val logger = Logger("JsonRepository")
   val mongoStreamRepository :MongoStreamRepository = _mongoStreamRepository
 
   def jsonToDocument(json :Json) :MongoResult[Document] = {
     // See the README for notes about how deepDropNullValues can cause unanticipated errors in your queries (e.g. $group: { _id: null }...)
     Try(Document(json.deepDropNullValues.spaces4)).toEither match {
       case Left(exc) => Left(MongoError(exc.getMessage()))
-      case Right(doc) => Right(doc)
+      case Right(doc) =>
+        logger.debug(s"$json converted into $doc")
+        Right(doc)
     }
   }
 

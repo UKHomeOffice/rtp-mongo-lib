@@ -295,4 +295,5 @@ class MongoCasbahRepositorySpec extends Specification {
     }
 
   }
+
 }

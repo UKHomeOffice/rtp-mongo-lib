@@ -23,20 +23,6 @@ class JsonObservableImpl(streamObservable :StreamObservable, jsonToDocument :Jso
     }
   }
 
-  /*
-   *
-   * In Mongo Json land the following two objects are comparable:
-   *   { "application.isDeleted" -> true }
-   *
-   *   and
-   *
-   *   { "application" -> { "isDeleted" -> true }}
-   *
-   *  writing queries using the dotted notation is natural for Mongo.
-   *
-   *  When writing MongoDBObject, I automatically "inflate" objects to the second internal representation. This allows me to
-  */
-
   def sort(json :Json) :JsonObservable = {
     jsonToDocument(json) match {
       case Left(mongoError) => new JsonErrorObservable(mongoError)
