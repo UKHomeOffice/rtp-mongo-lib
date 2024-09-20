@@ -57,10 +57,12 @@ abstract class MongoCasbahSalatRepository[A](_mongoCasbahRepository :MongoCasbah
     case Left(mongoError) => throw new MongoException(s"MONGO EXCEPTION: $mongoError")
     case Right(a) => a
   }}
+
   def find(q :MongoDBObject, p :MongoDBObject) :DBCursor[A] = mongoCasbahRepository.find(q, p).map { fromMongoDBObject(_) match {
     case Left(mongoError) => throw new MongoException(s"MONGO EXCEPTION: $mongoError")
     case Right(a) => a
   }}
+
   def aggregate(q :List[MongoDBObject]) :List[MongoDBObject] = mongoCasbahRepository.aggregate(q)
   def count(q :MongoDBObject) :Long = mongoCasbahRepository.count(q)
 

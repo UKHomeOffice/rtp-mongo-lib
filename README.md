@@ -2,13 +2,15 @@
 RTP Mongo Library - Scala library to work with Mongodb drivers
 ==============================================================
 
-Created in 2015, for Scala 2.11, this library bought [Mongo Casbah](https://mongodb.github.io/casbah/), the official Mongo driver at the time, and [Salat](https://github.com/salat/salat) together to create a seamless ORM for serialising domain objects to the database and writing effective Mongo queries.
+Created in 2015, for Scala 2.11, this library bought [Mongo Casbah](https://mongodb.github.io/casbah/), the official Mongo driver at the time, and [Salat](https://github.com/salat/salat) together to create a seamless ORM for serialising domain objects and writing effective Mongo queries.
 
 With Mongo Casbah abandoned and Salat un-portable due to its reliance on scalac internal apis our large business apps are held back on Scala 2.12 where support is slowly withering. This branch aims to rework the core platform:
 
-* moving us to the [latest official Mongo drivers](https://www.mongodb.com/docs/languages/scala/scala-driver/current/)
+* Moving us to the [latest official Mongo drivers](https://www.mongodb.com/docs/languages/scala/scala-driver/current/)
 * Using [Circe JSON](https://circe.github.io/circe/) (intentionally instead of codecs) for a platform independent serialisation solution
 * APIs that tightly mirror the major Casbah APIs we use such as MongoDBObject, MongoDBList and functions such as .save(), .find() .aggregate().
+
+Moving the app to the new underlying driver provides significant benefits over just using a support library. It allows us to move to Scala 2.13, allows upstream apps to move to Scala 2.13, apply security fixes for libraries left behind. It gives us access to Mongo features beyond Mongo 3.2 (now that Mongo 6 is released).
 
 # Sample code:
 
@@ -28,7 +30,7 @@ Use the official objects.
   )).head(), Duration.Inf)
 ```
 
-Get streaming features, backed by [fs2](https://fs2.io/#/getstarted/install) for a low-memory, high performance solution
+Get streaming features, backed by [fs2](https://fs2.io/#/getstarted/install) for a low-memory, high performance:
 
 ```scala
   // turn a collection into a repository and gain access to fs2 features.
@@ -57,7 +59,9 @@ Provide `A => io.circe.Json` and vice-versa to get serialisation of objects to a
   val saveResult = autoBookRepository.insertOne(Book("The Davinci Code", "Mike row", "743927492")).unsafeRunSync()
 
   println(s"Saving Davinci code returned: $saveResult")
+
 ```
+
 
 Reasons we choose to use a separate JSON serialisation instead of the Mongo driver's codec solution:
 
@@ -101,7 +105,9 @@ We talk to the database using [Extended JSON mode](https://www.mongodb.com/docs/
 
   HttpOK( myBook.asJson )
 
-  // notice that since ApiEncoder is imported, numbers converted to json like this: { "isbn" : 123 }
+  // notice that since ApiEncoder is imported, numbers converted to json like this:
+
+  { "isbn" : 123 }
 
   // alternatively in our db repositories we can simply import database encoder instead
 
@@ -121,10 +127,148 @@ Finally to ease the migration of all our code we provide several APIS that resem
 
 ```scala
 
-val casbahRepo = new MongoCasbahSalatRepository(autoBookRepository)
+val casbahRepo = new MongoCasbahSalatRepository(...)
 
-val aliceInWonderland = casbahRepo.save(Book("Alice in Wonderland", "Carol", "678234832"))
+val results :List[Records] = casbahRepo
+    .find(MongoDBObject("createdDate" -> ("$gt" -> DateTime.now)))
+    .sort(("_id" -> 1))
+    .limit(5)
+    .toList
 
-val results :List[Records] = casbah.find(MongoDBObject("createdDate" -> ("$gt" -> DateTime.now)))
+casbahRepo.save(myBook).getN()
 
 ```
+
+[Mongo driver documentation is here](https://www.mongodb.com/docs/languages/scala/scala-driver/current/). The [modern API is here](https://mongodb.github.io/mongo-java-driver/5.1/apidocs/mongo-scala-driver/org/mongodb/scala/MongoCollection.html). The [BSON API is here](https://mongodb.github.io/mongo-java-driver/4.11/apidocs/bson/org/bson/types/package-summary.html).
+
+## Why use this library?
+
+You should use the official Mongo drivers and skip depending on this library if possible. This is only helpful in migrating large apps which depend on Casbah to something more modern.
+
+## Implementation concerns.
+
+Whilst this library provides MongoDBObject seemingly compatible with Casbah there are some areas of concern.
+
+### Implementation of Options
+
+Behaviour of `MongoDBObject("someValue" -> option)` should be treated with care. JsonRepository calls `deepDropNullValues` when turning json into mongo documents before them. This provides some level of compatibility with Casbah's behaviour but has some caveats.
+
+The old mongo driver supported calling `update` without providing `$set` at the top level.
+
+In `mongosh` the following command would cause an error:
+
+```bash
+> db.test.updateOne({}, { "newValue": "hello" })
+Error: the update operation document must contain atomic operators
+```
+
+Our compatibility layer lifts the value into $set but where the value is null, the caller should rewrite the query to explicitly use $unset. e.g.:
+
+```scala
+val qry = x match {
+    case Some(v) => MongoDBObject("$set" -> ("name" -> v))
+    case None => MongoDBObject("$unset" -> ("name" -> 1))
+}
+```
+
+Currently we don't support `collection.distinct`. Instead rewrite the query to use `collection.aggregate`. The typical implementation would be: `{ $group: { $id: null, uniqueValues: $addToSet($someField) }}` however `$id: null` gets dropped due to the `deepDropNullValues` call. It leads to this exception: `a group specification must include an _id`. To get around this try hardcoding `_id` to 0 instead:
+
+```bash
+> db.names.find()
+{ "_id" : ObjectId("66ed414751342d27f0df15bc"), "name" : "johnson" }
+{ "_id" : ObjectId("66ed414c51342d27f0df15bd"), "name" : "may" }
+{ "_id" : ObjectId("66ed414f51342d27f0df15be"), "name" : "thatcher" }
+{ "_id" : ObjectId("66ed415351342d27f0df15bf"), "name" : "thatcher" }
+{ "_id" : ObjectId("66ed415d51342d27f0df15c0"), "name" : "sunak" }
+{ "_id" : ObjectId("66ed415e51342d27f0df15c1"), "name" : "sunak" }
+> db.names.aggregate([ { $group: { _id: 0, uniqueNames: { $addToSet: "$name" }}}])
+{ "_id" : 0, "uniqueNames" : [ "may", "thatcher", "sunak", "johnson" ] }
+```
+
+Code wise:
+
+```scala
+val uniqueNames :List[String] = collection.distinct('name').toList
+```
+
+becomes
+
+```scala
+val qry = collection.aggregate(List($group" -> MongoDBObject("_id" -> 0, "uniqueNames" -> ($addToSet -> "$name")))).toList
+val uniqueNames :List[String] = qry.headOption.map(_.as[MongoDBList[String]]("uniqueNames").toList).getOrElse(List.empty)
+
+```
+
+### Difficulties with the internal representation of a MongoDBObject.
+
+The internal representation of a MongoDBObject is tricky to keep simple. Particularly because of Mongo's support for *dotted notation*. At a first glance dotted notation suggests that both things are equal:
+
+```scala
+val dottedNotationDBObject = MongoDBObject()
+dottedNotationObject += ("contact.phone" -> "074155232312")
+dottedNotationObject += ("contact.name" -> "alfred")
+
+# vs
+
+val nestedObjectsApproach = MongoDBObject("contact" ->
+    MongoDBObject("phone" -> "074155232312")
+    MongoDBOBject("name" -> "alfred")
+)
+
+```
+
+Therefore considering how overwriting values using the alternating notation should work. The first thing I tried was to create a "normalised" internal notation where dotted notation was silently converted into a nested MongoDBObjects. That allowed this to work:
+
+```scala
+# should overwrite phone number?
+nestedObjectsApproach += ("contact.phone" -> "36492204638")
+
+```
+
+However the dotted notation is critically important when performing an update:
+
+```scala
+# in the database
+
+{ "contact": { "name": "alfred", "phone": "98674396492" }}
+
+val dottedNotationUpdate = MongoDBObject("$set" -> MongoDBObject("contact.phone" -> "82390183"))
+
+db.collection.updateOne(..., dottedNotationUpdate)     // works as expected...
+
+val nestedApproach = MongoDBObject("$set" -> MongoDBObject("contact" -> MongoDBObject("phone" -> "38942232")))
+
+db.collection.updateOne(..., nestedApproach)           // removes everything from contact except phone!!
+
+// Using nested approach causes the name to be deleted because only dotted notation deliberately!!
+
+```
+
+Using dotted notation is the only way to replace a single nested element without overwriting the whole document above it. Conversely using dotted notation everywhere does not work for specifying commands. E.g. this failure:
+
+```bash
+> db.names.updateOne({}, { "$set.age" : 56 })
+nknown modifier: $set.age. Expected a valid update modifier or pipeline-style update specified as an array
+```
+
+Therefore the internal data structure for a MongoDBObject (which is a `Map[String, AnyRef]`) can mix dotted and non-dotted notations and `getAs` attempts to do the right thing where possible but cannot be fully relied upon. Use `toString` or `toJson` to inspect and modify it where appropriate.
+
+Examples of things that aren't correctly implemented include:
+
+```scala
+
+val m = MongoDBObject("myLong" -> 98473924789238l)
+m.getAs[Long]("myLong.missingInnerValue") // should return None but actually returns Some(...)
+
+val m = MongoDBObject("hello" -> ("true" -> "someVal"), "hello.chalk" -> 66)
+m.getAs[MongoDBObject]("hello").keySet() // does not include chalk when it should
+
+```
+
+### Casbah's API does not give room to define ExecutionContexts for Future or IO
+
+1. There is a chance of an application hard locking up due to the excessive use of global ExecutionContexts. Typical Scala applications would have implicit paramters to pass these around but we need to fix some of the existing function signatures.
+
+2. Callers should be wary that holding cursors may hold streams open for too long.
+
+3. We use DBCursor / StreamObservable classes to allow chaining operations. For instance `find(something).sort(something)` doesn't do the sort client side, it's done by the mongo server, as expected. However where the results come back as fs2 Streams, some errors result are reported upstream by replacing the returned stream with a Stream of one item which contains the error.

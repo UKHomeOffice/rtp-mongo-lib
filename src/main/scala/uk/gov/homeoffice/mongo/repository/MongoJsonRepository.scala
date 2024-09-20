@@ -25,6 +25,7 @@ class MongoJsonRepository(_mongoStreamRepository :MongoStreamRepository) {
   val mongoStreamRepository :MongoStreamRepository = _mongoStreamRepository
 
   def jsonToDocument(json :Json) :MongoResult[Document] = {
+    // See the README for notes about how deepDropNullValues can cause unanticipated errors in your queries (e.g. $group: { _id: null }...)
     Try(Document(json.deepDropNullValues.spaces4)).toEither match {
       case Left(exc) => Left(MongoError(exc.getMessage()))
       case Right(doc) => Right(doc)

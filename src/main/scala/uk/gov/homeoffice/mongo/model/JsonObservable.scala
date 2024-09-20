@@ -62,3 +62,4 @@ class JsonErrorObservable(mongoError :MongoError) extends JsonObservable {
     fs2.Stream.emit[IO, MongoResult[Json]](Left(mongoError))
   }
 }
+

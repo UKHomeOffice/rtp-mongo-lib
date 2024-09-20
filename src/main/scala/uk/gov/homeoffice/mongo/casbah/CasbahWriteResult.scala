@@ -7,7 +7,10 @@ case class CasbahWriteResult(result :Json) {
   def getUpsertedId() :Option[ObjectId] = {
     result.hcursor.downField("getUpsertedId").downField("$oid").as[String].toOption match {
       case Some(id) => Some(new ObjectId(id))
-      case None => None
+      case None => result.hcursor.downField("getUpsertedId").as[String].toOption match {
+        case Some(id) => Some(new ObjectId(id))
+        case None => None
+      }
     }
   }
   def wasAcknowledged() :Boolean = result.hcursor.downField("wasAcknowledged").as[Boolean].toOption.get

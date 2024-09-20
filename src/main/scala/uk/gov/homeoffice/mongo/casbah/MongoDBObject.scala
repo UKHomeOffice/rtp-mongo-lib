@@ -14,7 +14,14 @@ class MongoDBObject(init :mutable.Map[String, AnyRef] = mutable.Map[String, AnyR
 
   val data :mutable.Map[String, AnyRef] = init
 
-  def expand(field :String, root :MongoDBObject) :Option[AnyRef] = {
+  def expand(field :String, root :MongoDBObject) :Option[AnyRef] =
+    expandLiteralPath(field, root) match {
+      case Some(v) => Some(v)
+      case None => expandNestedPath(field, root)
+    }
+
+  def expandLiteralPath(field :String, root :MongoDBObject) :Option[AnyRef] = root.data.get(field)
+  def expandNestedPath(field :String, root :MongoDBObject) :Option[AnyRef] = {
     field.split("\\.").toList match {
       case Nil => None
       case head :: Nil => root.data.get(head)
@@ -331,7 +338,8 @@ object MongoDBObject {
     dbObj
   }
 
-  // An odd one as we've flipped the old relationship
+  // In Casbah, the main type is DBObject and MongoDBObject is implicit
+  // Value class, so our representation takes quite a big detour from this.
   def apply(dbObject :DBObject) :MongoDBObject = {
     dbObject.mongoDBObject
   }
