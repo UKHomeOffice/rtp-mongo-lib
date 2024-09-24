@@ -18,6 +18,16 @@ import scala.concurrent.ExecutionContext
 
 import org.bson.types.ObjectId
 
+/* Primary Keys is something of a non-sensical argument. In order to test rtp-mongo-lib I ported a huge library to use this
+ * code. Only then did I cement the behaviour that worked and added tests. When I came to add the tests, only then did I realise
+ * that mongo doesn't support separate compound primary keys. Well, it supports compound keys, by virtue of allowing things to be
+ * nesting inside _id.. e.g.   { _id: { key1 : 123, key2: 543 }}.
+ *
+ * As a result, the only two values the make sense to pass are
+ *  List("_id"), which covers most cases
+ *  List.empty when you want all .save(a) calls to be treated as insertOne(a) calls instead.
+*/
+
 class MongoStreamRepository(
   val mongoConnection :MongoConnection,
   val collectionName :String,
