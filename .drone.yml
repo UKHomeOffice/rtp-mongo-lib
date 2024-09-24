@@ -34,6 +34,7 @@ steps:
     ARTIFACTORY_PASSWORD:
       from_secret: ARTIFACTORY_PASSWORD
     ARTIFACTORY_USERNAME: regt-build-bot
+    DB_TEST_HOST: database
   when:
     event:
     - push
@@ -74,4 +75,8 @@ steps:
     - tag
   depends_on:
     - build
-...
+
+services:
+  - name: database
+    pull: if-not-exists
+    image: mongo:5.0
