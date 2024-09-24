@@ -27,7 +27,10 @@ val root = Project(id = "rtp-mongo-lib", base = file("."))
       // joda datetime support
       "joda-time" % "joda-time" % "2.12.5",
 
-      "uk.gov.homeoffice" %% "rtp-test-lib" % "1.6.22-gacd233d"
+      "uk.gov.homeoffice" %% "rtp-test-lib" % "1.6.22-gacd233d",
+
+      // only required whilst we continue to cross-compile to Scala 2.12
+      "org.scala-lang.modules" %% "scala-collection-compat" % "2.12.0"
     ),
     addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3"),
     addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
