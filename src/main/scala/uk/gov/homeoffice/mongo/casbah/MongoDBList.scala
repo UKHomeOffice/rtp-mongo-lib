@@ -12,7 +12,7 @@ class MongoDBList[A](val array :Array[A])(implicit tag :scala.reflect.ClassManif
     }.mkString(",")
     s"MONGO DB LIST [$items]"
   }
-  override def equals(other :Any) = other.isInstanceOf[MongoDBList[A]] match {
+  override def equals(other :Any) = other.isInstanceOf[MongoDBList[_]] match {
     case false => false
     case true => other.asInstanceOf[MongoDBList[A]].toList.equals(array.toList)
   }

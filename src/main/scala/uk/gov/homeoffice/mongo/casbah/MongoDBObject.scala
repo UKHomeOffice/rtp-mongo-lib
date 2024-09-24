@@ -43,7 +43,7 @@ class MongoDBObject(init :mutable.Map[String, AnyRef] = mutable.Map[String, AnyR
     getAs[A](field) match {
       case Some(a) => a
       case None =>
-        throw new Exception(s"MongoDBObject.as for $field returned None (${asDBObject}")
+        throw new Exception(s"MongoDBObject.as for $field returned None ($asDBObject)")
     }
 
   def get(field :String) :Option[AnyRef] =

@@ -1,7 +1,7 @@
 package uk.gov.homeoffice.mongo.repository
 
 import cats.effect.IO
-import cats.implicits._
+
 import com.mongodb.client.model.ReplaceOptions
 import com.typesafe.scalalogging.Logger
 import org.bson.json._

@@ -8,7 +8,6 @@ import com.mongodb.client.result._
 import cats.effect.IO
 import cats.implicits._
 import com.mongodb.client.model.{UpdateOptions, ReplaceOptions}
-import com.typesafe.scalalogging.StrictLogging
 import org.bson.json._
 import org.bson.conversions.Bson
 import org.mongodb.scala.bson.Document
@@ -23,7 +22,7 @@ class MongoStreamRepository(
   val mongoConnection :MongoConnection,
   val collectionName :String,
   val primaryKeys :List[String] = List()
-) extends StrictLogging {
+) {
   import uk.gov.homeoffice.mongo.MongoHelpers._
   implicit val ec :ExecutionContext = ExecutionContext.global
 
@@ -60,7 +59,7 @@ class MongoStreamRepository(
           /* convert insertResult to updateResult */
           case Right(insertResult) if insertResult.wasAcknowledged =>
            Right(UpdateResult.acknowledged(0, 1, insertResult.getInsertedId()))
-          case Right(insertResult) if !insertResult.wasAcknowledged =>
+          case Right(insertResult) =>
            Right(UpdateResult.unacknowledged())
         }
       case false =>

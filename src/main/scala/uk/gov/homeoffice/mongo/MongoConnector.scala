@@ -1,18 +1,11 @@
 package uk.gov.homeoffice.mongo
 
-import cats.effect.Sync
 import com.typesafe.scalalogging.StrictLogging
-import org.bson.codecs.configuration.CodecRegistries
-import org.bson.codecs.configuration.CodecRegistries.fromProviders
 import org.mongodb.scala.MongoClient.DEFAULT_CODEC_REGISTRY
 import org.mongodb.scala.bson.collection.immutable.Document
 import org.mongodb.scala.{ConnectionString, MongoClient, MongoClientSettings, MongoDatabase, WriteConcern}
 
 import scala.reflect.ClassTag
-
-/*
-   Do not call these functions directly for database connections as you will be opening new and unmanaged ones. Instead use the single, preconfigured, global instance in your app or near the top of your call stack that can be used everywhere.
- */
 
 case class MongoConnection(
   connectionString :String,
@@ -24,6 +17,9 @@ case class MongoConnection(
 }
 
 object MongoConnector extends StrictLogging {
+
+  /* MongoConnector.connect opens a new database connection. You should either pass the one instance around,
+   * or assign it to a global, or close it meticulously with connector.database.close() */
 
   def connect(connectionString :String, appName :String, ssl :Boolean, databaseName :String) :MongoConnection = {
 
