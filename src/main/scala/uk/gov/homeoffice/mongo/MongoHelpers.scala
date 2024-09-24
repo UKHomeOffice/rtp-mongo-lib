@@ -3,7 +3,6 @@ package uk.gov.homeoffice.mongo
 import cats.data.EitherT
 import cats.effect.IO
 import cats.implicits._
-import cats.effect.std.Queue
 import org.mongodb.scala.{Observable, Observer}
 import scala.concurrent.{Future, ExecutionContext}
 
@@ -12,7 +11,7 @@ import uk.gov.homeoffice.mongo.model.syntax._
 object MongoHelpers {
   import uk.gov.homeoffice.mongo.model._
 
-  def fromObservable[A](observable :Observable[A]) :fs2.Stream[IO, MongoResult[A]] = {
+  def fromObservable[A](observable :Observable[A], terminateOnError :Boolean = true) :fs2.Stream[IO, MongoResult[A]] = {
     import cats.effect.std.{Dispatcher, Queue}
     import cats.effect.implicits._
 
@@ -23,27 +22,12 @@ object MongoHelpers {
         def enqueue(v: Option[MongoResult[A]]): Unit = d.unsafeRunAndForget(q.offer(v))
         observable.subscribe(new Observer[A] {
           override def onNext(t: A): Unit = enqueue(Some(Right(t)))
-          override def onError(throwable: Throwable): Unit = enqueue(Some(Left(MongoError(s"Streaming error: ${throwable}"))))
-          override def onComplete(): Unit = enqueue(None)
-        })
-        fs2.Stream.emit(())
-      }
-      qnt <- fs2.Stream.fromQueueNoneTerminated(q)
-    } yield { qnt }
-  }
-
-  def fromDirectObservableString(observable :Observable[String]) :fs2.Stream[IO, MongoResult[String]] = {
-    import cats.effect.std.{Dispatcher, Queue}
-    import cats.effect.implicits._
-
-    for {
-      d <- fs2.Stream.resource(Dispatcher.sequential[IO])
-      q <- fs2.Stream.eval(Queue.unbounded[IO, Option[MongoResult[String]]])
-      _ <- fs2.Stream.suspend {
-        def enqueue(v: Option[MongoResult[String]]): Unit = d.unsafeRunAndForget(q.offer(v))
-        observable.subscribe(new Observer[String] {
-          override def onNext(t: String): Unit = enqueue(Some(Right(t)))
-          override def onError(throwable: Throwable): Unit = enqueue(Some(Left(MongoError(s"Streaming error: ${throwable}"))))
+          override def onError(throwable: Throwable): Unit = {
+            enqueue(Some(Left(MongoError(s"Streaming error: ${throwable}"))))
+            if (terminateOnError) {
+              enqueue(None)
+            }
+          }
           override def onComplete(): Unit = enqueue(None)
         })
         fs2.Stream.emit(())

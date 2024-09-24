@@ -24,10 +24,3 @@ class ObjectObservableImpl[A](jsonObservable :JsonObservable, jsonToObject :(Jso
     case Right(json) => jsonToObject(json)
   }
 }
-
-class ObjectErrorObservable[A](mongoError :MongoError) extends ObjectObservable[A] {
-  def sort(orderBy :Json) :ObjectObservable[A] = this
-  def limit(n :Int) :ObjectObservable[A] = this
-  def skip(n :Int) :ObjectObservable[A] = this
-  def toFS2Stream() :fs2.Stream[IO, MongoResult[A]] = fs2.Stream.emit[IO, MongoResult[A]](Left(mongoError))
-}

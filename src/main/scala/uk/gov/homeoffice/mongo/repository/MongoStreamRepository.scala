@@ -121,6 +121,6 @@ class MongoStreamRepository(
 
   def distinct(fieldName :String, query :Document) :fs2.Stream[IO, MongoResult[String]] = {
     val qry = collection.distinct[String](fieldName, query)
-    fromDirectObservableString(qry)
+    fromObservable(qry)
   }
 }
