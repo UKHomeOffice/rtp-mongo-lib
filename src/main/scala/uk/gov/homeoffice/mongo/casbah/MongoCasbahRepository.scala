@@ -153,3 +153,13 @@ class MongoCasbahRepository(_mongoJsonRepository :MongoJsonRepository) {
     resultList
   }
 }
+
+object MongoCasbahRepository {
+  def apply(mongoConnection :MongoConnection, tableName :String, primaryKeys :List[String] = List("_id")) :MongoCasbahRepository = {
+    new MongoCasbahRepository(
+      new MongoJsonRepository(
+        new MongoStreamRepository(mongoConnection, tableName, primaryKeys)
+      )
+    )
+  }
+}
