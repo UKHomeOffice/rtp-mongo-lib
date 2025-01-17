@@ -21,58 +21,11 @@ import uk.gov.homeoffice.mongo.model._
 import uk.gov.homeoffice.mongo.model.syntax._
 
 class MongoJsonRepository(_mongoStreamRepository :MongoStreamRepository) {
+  import MongoJsonRepository._
 
   val logger = Logger("JsonRepository")
   val mongoStreamRepository :MongoStreamRepository = _mongoStreamRepository
 
-  def jsonToDocument(json :Json) :MongoResult[Document] = {
-    // See the README for notes about how deepDropNullValues can cause unanticipated errors in your queries (e.g. $group: { _id: null }...)
-    Try(Document(json.deepDropNullValues.spaces4)).toEither match {
-      case Left(exc) => Left(MongoError(exc.getMessage()))
-      case Right(doc) =>
-        logger.debug(s"$json converted into $doc")
-        Right(doc)
-    }
-  }
-
-  def documentToJson(document :Document) :MongoResult[Json] = {
-    val jsonWriterSettings = JsonWriterSettings.builder().outputMode(JsonMode.EXTENDED).build()
-    parse(document.toJson(jsonWriterSettings)).left.map(exc => MongoError(exc.getMessage()))
-  }
-
-  def resultToJson(result :InsertOneResult) :Json = {
-    val id = result.getInsertedId() match {
-      case n if !Option(n).isDefined => Json.Null
-      case n if n.isNull => Json.Null
-      case oid if oid.isObjectId() => Json.fromString(oid.asObjectId().getValue().toHexString)
-      case i if i.isNumber => Json.fromInt(i.asNumber().asInt64.intValue)
-      case str => Json.fromString(str.asString().getValue())
-    }
-
-    Json.obj(
-      "getInsertedId" -> id,
-      "wasAcknowledged" -> Json.fromBoolean(result.wasAcknowledged)
-    )
-  }
-
-  def resultToJson(result :UpdateResult) :io.circe.Json = {
-    import io.circe.syntax._
-
-    val baseJsObj :io.circe.JsonObject = io.circe.JsonObject(
-      "getMatchedCount" -> Json.fromLong(result.getMatchedCount()),
-      "getModifiedCount" -> Json.fromLong(result.getModifiedCount()),
-      "wasAcknowledged" -> Json.fromBoolean(result.wasAcknowledged)
-    )
-
-    result.getUpsertedId() match {
-      case n if !Option(n).isDefined => baseJsObj.asJson
-      case n if n.isNull => baseJsObj.asJson
-      case oid if oid.isObjectId() => baseJsObj.add("getUpsertedId", Json.fromString(oid.asObjectId().getValue().toHexString)).asJson
-      case i if i.isNumber => baseJsObj.add("getUpsertedId", Json.fromInt(i.asNumber().asInt64.intValue)).asJson
-      case str => baseJsObj.add("getUpsertedId", Json.fromString(str.asString().getValue())).asJson
-    }
-
-  }
 
   def insertOne(json :Json) :IO[MongoResult[Json]] = {
     jsonToDocument(json) match {
@@ -198,5 +151,58 @@ class MongoJsonRepository(_mongoStreamRepository :MongoStreamRepository) {
       case Right(docFilter) =>
         mongoStreamRepository.distinct(fieldName, docFilter)
     }
+  }
+}
+
+object MongoJsonRepository {
+  val logger = Logger("JsonRepository")
+
+  def jsonToDocument(json :Json) :MongoResult[Document] = {
+    // See the README for notes about how deepDropNullValues can cause unanticipated errors in your queries (e.g. $group: { _id: null }...)
+    Try(Document(json.deepDropNullValues.spaces4)).toEither match {
+      case Left(exc) => Left(MongoError(exc.getMessage()))
+      case Right(doc) =>
+        logger.debug(s"$json converted into $doc")
+        Right(doc)
+    }
+  }
+
+  def documentToJson(document :Document) :MongoResult[Json] = {
+    val jsonWriterSettings = JsonWriterSettings.builder().outputMode(JsonMode.EXTENDED).build()
+    parse(document.toJson(jsonWriterSettings)).left.map(exc => MongoError(exc.getMessage()))
+  }
+
+  def resultToJson(result :InsertOneResult) :Json = {
+    val id = result.getInsertedId() match {
+      case n if !Option(n).isDefined => Json.Null
+      case n if n.isNull => Json.Null
+      case oid if oid.isObjectId() => Json.fromString(oid.asObjectId().getValue().toHexString)
+      case i if i.isNumber => Json.fromInt(i.asNumber().asInt64.intValue)
+      case str => Json.fromString(str.asString().getValue())
+    }
+
+    Json.obj(
+      "getInsertedId" -> id,
+      "wasAcknowledged" -> Json.fromBoolean(result.wasAcknowledged)
+    )
+  }
+
+  def resultToJson(result :UpdateResult) :io.circe.Json = {
+    import io.circe.syntax._
+
+    val baseJsObj :io.circe.JsonObject = io.circe.JsonObject(
+      "getMatchedCount" -> Json.fromLong(result.getMatchedCount()),
+      "getModifiedCount" -> Json.fromLong(result.getModifiedCount()),
+      "wasAcknowledged" -> Json.fromBoolean(result.wasAcknowledged)
+    )
+
+    result.getUpsertedId() match {
+      case n if !Option(n).isDefined => baseJsObj.asJson
+      case n if n.isNull => baseJsObj.asJson
+      case oid if oid.isObjectId() => baseJsObj.add("getUpsertedId", Json.fromString(oid.asObjectId().getValue().toHexString)).asJson
+      case i if i.isNumber => baseJsObj.add("getUpsertedId", Json.fromInt(i.asNumber().asInt64.intValue)).asJson
+      case str => baseJsObj.add("getUpsertedId", Json.fromString(str.asString().getValue())).asJson
+    }
+
   }
 }
