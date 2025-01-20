@@ -13,12 +13,15 @@ sealed trait DBCursor[A] {
 
   def limit(n :Int) :DBCursor[A]
   def skip(n :Int) :DBCursor[A]
-  def take(n :Int) :DBCursor[A]
 
-  def apply() :List[A]
-  def toList() :List[A]
-
+  /* the default map is the map you would expect - DBCursor[A] -> DBCursor[B].
+   * It is lazy and only applies fn when realised. It can be used in chains like this:
+   *     find().sort.map(fn).limit(1).skip(1).map(fn2).take(2).toList
+  */
   def map[B](fn :A => B) :DBCursor[B]
+
+  /* finally realise the query */
+  def stream() :fs2.Stream[IO, A]
 }
 
 class DBCursorMongoDBObjectImpl(jsonObservable :JsonObservable) extends DBCursor[MongoDBObject] {
@@ -29,43 +32,29 @@ class DBCursorMongoDBObjectImpl(jsonObservable :JsonObservable) extends DBCursor
   def sort(orderBy :MongoDBObject) :DBCursor[MongoDBObject] =
     new DBCursorMongoDBObjectImpl(jsonObservable.sort(orderBy.toJson))
 
+  /* limit is not the same as fs2Stream.take(). limit becomes part of the mongo command executed on the
+   * database server. The query isn't executed and results realised until unsafeRunSync is called on
+   * the fs2Stream.
+   *
+   * Thus:
+   *    db.find(MongoDBObject.empty).limit(1).sort(1)
+   *
+   * does nothing on the db server. when you add .toList the Mongo command itself includes the limit + 
+   * sort arguments.
+  */
+
   def limit(n :Int) :DBCursor[MongoDBObject] = new DBCursorMongoDBObjectImpl(jsonObservable.limit(n))
   def skip(n :Int) :DBCursor[MongoDBObject] = new DBCursorMongoDBObjectImpl(jsonObservable.skip(n))
-  def take(n :Int) :DBCursor[MongoDBObject] = limit(n)
-
-  def apply() :List[MongoDBObject] = jsonObservable.toFS2Stream().map {
-    case Left(mongoError) => throw new Exception(s"MONGO EXCEPTION DBCursorMongoDBObject.apply: $mongoError")
-    case Right(json) => MongoDBObject(json)
-  }.attempt.compile.toList.unsafeRunSync().map {
-    case Left(x) => Left(x)
-    case Right(e) => Right(e)
-    }.collect { case Right(e) => e }
-
-  def toList() :List[MongoDBObject] = apply()
 
   def map[B](fn :MongoDBObject => B) :DBCursor[B] = {
     new DBCursorWrappedImpl[B, MongoDBObject](this, fn)
   }
-}
 
-class DBCursorImpl[A](dbCursor :DBCursor[A]) extends DBCursor[A] {
-
-  def projection(projection :MongoDBObject) :DBCursor[A] =
-    new DBCursorImpl[A](dbCursor.projection(projection))
-
-  def sort(orderBy :MongoDBObject) :DBCursor[A] =
-    new DBCursorImpl[A](dbCursor.sort(orderBy))
-
-  def limit(n :Int) :DBCursor[A] = new DBCursorImpl[A](dbCursor.limit(n))
-  def skip(n :Int) :DBCursor[A] = new DBCursorImpl[A](dbCursor.skip(n))
-  def take(n :Int) :DBCursor[A] = limit(n)
-
-  def apply() :List[A] = dbCursor.toList()
-  def toList() :List[A] = apply()
-
-  def map[B](fn :A => B) :DBCursor[B] = {
-    new DBCursorWrappedImpl[B, A](this, fn)
+  def stream() :fs2.Stream[IO, MongoDBObject] = jsonObservable.toFS2Stream().map {
+    case Left(mongoError) => throw new Exception(s"MONGO EXCEPTION DBCursorMongoDBObject.apply: $mongoError")
+    case Right(json) => MongoDBObject(json)
   }
+
 }
 
 class DBCursorWrappedImpl[A, B](dbCursor :DBCursor[B], fn :(B => A)) extends DBCursor[A] {
@@ -74,30 +63,30 @@ class DBCursorWrappedImpl[A, B](dbCursor :DBCursor[B], fn :(B => A)) extends DBC
   def sort(orderBy :MongoDBObject) :DBCursor[A] = new DBCursorWrappedImpl[A, B](dbCursor.sort(orderBy), fn)
   def limit(n :Int) :DBCursor[A] = new DBCursorWrappedImpl[A, B](dbCursor.limit(n), fn)
   def skip(n :Int) :DBCursor[A] = new DBCursorWrappedImpl[A, B](dbCursor.skip(n), fn)
-  def take(n :Int) :DBCursor[A] = limit(n)
 
-  def apply() :List[A] = dbCursor.toList().map(fn)
-  def toList() :List[A] = apply()
+  def stream() :fs2.Stream[IO, A] = dbCursor.stream.map(fn)
 
   def map[C](fnAC :A => C) :DBCursor[C] = {
     new DBCursorWrappedImpl[C, A](this, fnAC)
   }
 }
 
-class DBCursorError[A](mongoError :MongoError) extends DBCursor[A] {
+object DBCursor {
 
-  def projection(projection :MongoDBObject) :DBCursor[A] = this
-  def sort(orderBy :MongoDBObject) :DBCursor[A] = this
-  def limit(n :Int) :DBCursor[A] = this
-  def skip(n :Int) :DBCursor[A] = this
-  def take(n :Int) :DBCursor[A] = limit(n)
+  implicit class DBCursorOps[A](val underlying :DBCursor[A]) extends AnyVal {
+    def toList() :List[A] =
+      underlying.stream().compile.toList.unsafeRunSync()
 
-  def apply() :List[A] = {
-    throw new Exception(s"MONGO DB CURSOR EXCEPTION: $mongoError")
+    def headOption() :Option[A] =
+      underlying.limit(1).stream().take(1).compile.toList.unsafeRunSync().headOption
+
+    // Calling drain here means we never end up with O(n) records.
+    def foreach(fn: A => Unit) :Unit =
+      underlying.stream().map(fn).compile.drain.unsafeRunSync()
+
+    def mapS[B](fn: A => B) :List[B] =
+      underlying.stream().map(fn).compile.toList.unsafeRunSync()
   }
-  def toList() :List[A] = {
-    throw new Exception(s"MONGO DB CURSOR EXCEPTION: $mongoError")
-  }
 
-  def map[B](fn :A => B) :DBCursor[B] = new DBCursorError[B](mongoError)
 }
+
