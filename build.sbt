@@ -6,8 +6,8 @@ val root = Project(id = "rtp-mongo-lib", base = file("."))
   .settings(
     name := "rtp-mongo-lib",
     organization := "uk.gov.homeoffice",
-    scalaVersion := "3.3.1",
-    crossScalaVersions := Seq("2.13.16","3.3.1"),
+    scalaVersion := "3.3.5",
+    crossScalaVersions := Seq("2.13.16","3.3.5"),
     libraryDependencies ++= Seq(
       "ch.qos.logback" % "logback-classic" % "1.5.17",
       "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5",
