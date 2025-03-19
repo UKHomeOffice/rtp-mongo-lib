@@ -19,7 +19,7 @@ class ObjectObservableImpl[A](jsonObservable :JsonObservable, jsonToObject :(Jso
   def limit(n :Int) :ObjectObservable[A] = new ObjectObservableImpl[A](jsonObservable.limit(n), jsonToObject)
   def skip(n :Int) :ObjectObservable[A] = new ObjectObservableImpl[A](jsonObservable.skip(n), jsonToObject)
 
-  def toFS2Stream() :fs2.Stream[IO, MongoResult[A]] = jsonObservable.toFS2Stream.map {
+  def toFS2Stream() :fs2.Stream[IO, MongoResult[A]] = jsonObservable.toFS2Stream().map {
     case Left(mongoError) => Left(mongoError)
     case Right(json) => jsonToObject(json)
   }

@@ -17,6 +17,7 @@ import org.mongodb.scala.bson._
 import scala.concurrent.ExecutionContext
 
 import org.bson.types.ObjectId
+import org.mongodb.scala.MongoCollection
 
 /* Primary Keys is something of a non-sensical argument. In order to test rtp-mongo-lib I ported a huge library to use this
  * code. Only then did I cement the behaviour that worked and added tests. When I came to add the tests, only then did I realise
@@ -34,9 +35,10 @@ class MongoStreamRepository(
   val primaryKeys :List[String] = List()
 ) {
   import uk.gov.homeoffice.mongo.MongoHelpers._
+  import org.mongodb.scala.given
   implicit val ec :ExecutionContext = ExecutionContext.global
 
-  val collection = mongoConnection.mongoCollection[Document](collectionName)
+  val collection: MongoCollection[Document] = mongoConnection.mongoCollection[Document](collectionName)
 
   def insertOne(document :Document) :IO[MongoResult[InsertOneResult]] = {
     val result = collection.insertOne(document)
@@ -46,7 +48,7 @@ class MongoStreamRepository(
 
   def save(document :Document) :IO[MongoResult[UpdateResult]] = {
     import scala.jdk.CollectionConverters._
-    
+
     val elems :java.util.List[BsonElement] = primaryKeys
       .map { pk => (pk, document.get[BsonValue](pk)) }
       .filter(_._2.isDefined)

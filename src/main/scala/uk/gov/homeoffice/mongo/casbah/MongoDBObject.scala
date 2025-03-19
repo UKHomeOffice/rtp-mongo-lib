@@ -43,7 +43,7 @@ class MongoDBObject(init :mutable.Map[String, AnyRef] = mutable.Map[String, AnyR
     getAs[A](field) match {
       case Some(a) => a
       case None =>
-        throw new Exception(s"MongoDBObject.as for $field returned None ($asDBObject)")
+        throw new Exception(s"MongoDBObject.as for $field returned None (${asDBObject()})")
     }
 
   def get(field :String) :Option[AnyRef] =
@@ -180,25 +180,25 @@ class MongoDBObject(init :mutable.Map[String, AnyRef] = mutable.Map[String, AnyR
         case m if m.isInstanceOf[DBObject] => m.asInstanceOf[DBObject].mongoDBObject.toJson()
         case d if d.isInstanceOf[ObjectId] => Json.obj("$oid" -> Json.fromString(d.toString()))
         case l if l.isInstanceOf[MongoDBList[_]] =>
-          val arr :List[AnyRef] = l.asInstanceOf[MongoDBList[AnyRef]].toList
-          val jsonArr :List[Json] = arr.map { item :AnyRef => valueToJson(item) }
+          val arr :List[AnyRef] = l.asInstanceOf[MongoDBList[AnyRef]].toList()
+          val jsonArr :List[Json] = arr.map { (item :AnyRef) => valueToJson(item) }
           Json.arr(jsonArr :_*)
         // handle all collections
         case l if l.isInstanceOf[Array[_]] =>
           val arr = l.asInstanceOf[Array[AnyRef]]
-          val jsonArr = arr.map { item :AnyRef => valueToJson(item) }
+          val jsonArr = arr.map { (item :AnyRef) => valueToJson(item) }
           Json.arr(jsonArr :_*)
         case l if l.isInstanceOf[List[_]] =>
           val arr = l.asInstanceOf[List[AnyRef]]
-          val jsonArr = arr.map { item :AnyRef => valueToJson(item) }
+          val jsonArr = arr.map { (item :AnyRef) => valueToJson(item) }
           Json.arr(jsonArr :_*)
         case l if l.isInstanceOf[Seq[_]] =>
           val arr = l.asInstanceOf[Seq[AnyRef]]
-          val jsonArr = arr.map { item :AnyRef => valueToJson(item) }.toList
+          val jsonArr = arr.map { (item :AnyRef) => valueToJson(item) }.toList
           Json.arr(jsonArr :_*)
         case l if l.isInstanceOf[Set[_]] =>
           val arr = l.asInstanceOf[Set[AnyRef]]
-          val jsonArr = arr.map { item :AnyRef => valueToJson(item) }.toList
+          val jsonArr = arr.map { (item :AnyRef) => valueToJson(item) }.toList
           Json.arr(jsonArr :_*)
         case o if o.isInstanceOf[Map[_, _]] =>
           val inner = o.asInstanceOf[Map[String, AnyRef]]
@@ -238,7 +238,7 @@ class MongoDBObject(init :mutable.Map[String, AnyRef] = mutable.Map[String, AnyR
       case (k, v) if v.isInstanceOf[DateTime] => s"$k -> ${v.asInstanceOf[DateTime].toString}"
       case (k, v) if v.isInstanceOf[ObjectId] => s"$k -> ${v.asInstanceOf[ObjectId]}"
       case (k, v) if v.isInstanceOf[MongoDBObject] => s"$k -> ${v.asInstanceOf[MongoDBObject].toString}"
-      case (k, v) if v.isInstanceOf[MongoDBList[_]] => s"$k -> ${v.asInstanceOf[MongoDBList[_]].toList.mkString(",")}"
+      case (k, v) if v.isInstanceOf[MongoDBList[_]] => s"$k -> ${v.asInstanceOf[MongoDBList[_]].toList().mkString(",")}"
       case (k, v) if v.isInstanceOf[mutable.Map[_, _]] => s"$k -> ${v.asInstanceOf[mutable.Map[String, AnyRef]].toString}"
       case (k, v) if v.isInstanceOf[AnyRef] => s"$k -> ${v}"
     }.mkString(",")

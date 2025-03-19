@@ -14,15 +14,15 @@ class MongoDBObjectSpec extends Specification {
 
     "has a working put function" in {
       
-      val m :MongoDBObject = MongoDBObject.empty
+      val m :MongoDBObject = MongoDBObject.empty()
       m.put("hello" -> "test")
 
-      m.toMap mustEqual Map[String, AnyRef]("hello" -> "test".asInstanceOf[AnyRef])
+      m.toMap() mustEqual Map[String, AnyRef]("hello" -> "test".asInstanceOf[AnyRef])
 
     }
 
     "working put and get" in {
-      val m :MongoDBObject = MongoDBObject.empty
+      val m :MongoDBObject = MongoDBObject.empty()
       m.put("hello" -> "test")
       m.get("hello") must beSome("test")
 
@@ -33,7 +33,7 @@ class MongoDBObjectSpec extends Specification {
     }
 
     "get, as and getAs work as intended" in {
-      val m :MongoDBObject = MongoDBObject.empty
+      val m :MongoDBObject = MongoDBObject.empty()
       m.put("long" -> 145l)
 
       m.get("long") must beSome(145l)
@@ -44,7 +44,7 @@ class MongoDBObjectSpec extends Specification {
     }
 
     "get on a non-existent key returns None" in {
-      val m :MongoDBObject = MongoDBObject.empty
+      val m :MongoDBObject = MongoDBObject.empty()
       m.put("long" -> 145l)
       m.get("cheese") must beNone
     }
@@ -61,7 +61,7 @@ class MongoDBObjectSpec extends Specification {
     */
     
     "put will overwrite values" in {
-      val m :MongoDBObject = MongoDBObject.empty
+      val m :MongoDBObject = MongoDBObject.empty()
       m.put("hello" -> "test")
       m.put("hello" -> "X")
 
@@ -70,7 +70,7 @@ class MongoDBObjectSpec extends Specification {
 
     "MongoDBObjects can be nested" in {
 
-      val m :MongoDBObject = MongoDBObject.empty
+      val m :MongoDBObject = MongoDBObject.empty()
       m.put("hello" -> MongoDBObject("true" -> "test"))
 
       m.getAs[String]("hello.true") must beSome("test")
@@ -79,7 +79,7 @@ class MongoDBObjectSpec extends Specification {
 
     "shallow MongoDBObjects overwrite the previous entry" in {
 
-      val m :MongoDBObject = MongoDBObject.empty
+      val m :MongoDBObject = MongoDBObject.empty()
       m.put("hello" -> MongoDBObject("true" -> "test"))
 
       m.getAs[String]("hello.true") must beSome("test")
@@ -91,7 +91,7 @@ class MongoDBObjectSpec extends Specification {
     }
 
     "basic dotted notation is supported in get/getAs" in {
-      val m :MongoDBObject = MongoDBObject.empty
+      val m :MongoDBObject = MongoDBObject.empty()
       m.put("hello" -> MongoDBObject("true" -> MongoDBObject("riffle" -> "test")))
       m.put("hello.chalk" -> false)
 
@@ -100,11 +100,11 @@ class MongoDBObjectSpec extends Specification {
 
       // For better compatibility, we should improve dotted notation and make
       // this return 'chalk' as well
-      m.getAs[MongoDBObject]("hello").map (_.keySet) mustEqual Some(Set("true"))
+      m.getAs[MongoDBObject]("hello").map (_.keySet()) mustEqual Some(Set("true"))
     }
 
     "use of dotted notation in put results in merged objects" in {
-      val m :MongoDBObject = MongoDBObject.empty
+      val m :MongoDBObject = MongoDBObject.empty()
       m.put("hello" -> MongoDBObject("true" -> MongoDBObject("riffle" -> "test")))
       m.put("hello.true.raffle" -> false)
 
@@ -188,7 +188,7 @@ class MongoDBObjectSpec extends Specification {
         "3" -> 3,
       )
 
-      m.iterator.map(_._2.asInstanceOf[Int]).sum mustEqual 6
+      m.iterator().map(_._2.asInstanceOf[Int]).sum mustEqual 6
       
     }
 
@@ -243,7 +243,7 @@ class MongoDBObjectSpec extends Specification {
         "apple" -> MongoDBObject("granny smith" -> 3),
       )
 
-      m.keySet mustEqual Set("apple", "banana", "orange")
+      m.keySet() mustEqual Set("apple", "banana", "orange")
     }
 
     "have a working containsKey function" in {
@@ -267,7 +267,7 @@ class MongoDBObjectSpec extends Specification {
         "apple" -> MongoDBObject("granny smith" -> 3),
       )
 
-      m.toMap mustEqual Map[String, AnyRef](
+      m.toMap() mustEqual Map[String, AnyRef](
         "orange" -> 1.asInstanceOf[AnyRef],
         "banana" -> 2.asInstanceOf[AnyRef],
         "apple" -> MongoDBObject("granny smith" -> 3)
@@ -281,7 +281,7 @@ class MongoDBObjectSpec extends Specification {
         "apple" -> MongoDBObject("granny smith" -> 3),
       )
 
-      val result = m.asDBObject
+      val result = m.asDBObject()
       result.get("orange").asInstanceOf[Int] mustEqual 1
       result.get("banana").asInstanceOf[Int] mustEqual 2
       result.get("apple").asInstanceOf[MongoDBObject] mustEqual MongoDBObject("granny smith" -> 3)
@@ -303,7 +303,7 @@ class MongoDBObjectSpec extends Specification {
         "objectId" -> obj
       )
 
-      val result = m.toJson
+      val result = m.toJson()
 
       result mustEqual Json.obj(
         "date" -> Json.obj("$date" -> Json.fromString(dt.toString())),

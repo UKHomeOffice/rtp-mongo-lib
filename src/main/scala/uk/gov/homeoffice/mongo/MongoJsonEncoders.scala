@@ -12,8 +12,8 @@ import scala.util.{Try, Success, Failure}
 import cats.implicits.catsSyntaxOptionId
 
 object MongoJsonEncoders {
-  val dtFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX")
-  val dtFormatter2 = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX")
+  val dtFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX")
+  val dtFormatter2: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX")
 
   object ApiEncoding {
     

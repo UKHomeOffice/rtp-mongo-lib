@@ -6,14 +6,14 @@ val root = Project(id = "rtp-mongo-lib", base = file("."))
   .settings(
     name := "rtp-mongo-lib",
     organization := "uk.gov.homeoffice",
-    scalaVersion := "2.13.14",
-    crossScalaVersions := Seq("2.12.16", "2.13.14"),
+    scalaVersion := "3.3.1",
+    crossScalaVersions := Seq("2.13.16","3.3.1"),
     libraryDependencies ++= Seq(
-      "ch.qos.logback" % "logback-classic" % "1.5.6",
+      "ch.qos.logback" % "logback-classic" % "1.5.17",
       "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5",
       "io.netty"         % "netty-all" % "4.1.112.Final",
 
-      "org.mongodb.scala" %% "mongo-scala-driver" % "5.1.3",
+      ("org.mongodb.scala" %% "mongo-scala-driver" % "5.1.3").cross(CrossVersion.for3Use2_13),
 
       // Json support
       "io.circe" %% "circe-core" % "0.14.9",
@@ -21,22 +21,35 @@ val root = Project(id = "rtp-mongo-lib", base = file("."))
       "io.circe" %% "circe-parser" % "0.14.9",
 
       // cats effect and streaming support
-      "org.typelevel" %% "cats-effect" % "3.5.4",
+      "org.typelevel" %% "cats-effect" % "3.5.7",
       "co.fs2" %% "fs2-core" % "3.10.2",
 
       // joda datetime support
-      "joda-time" % "joda-time" % "2.12.5",
+      "joda-time" % "joda-time" % "2.13.1",
 
-      "uk.gov.homeoffice" %% "rtp-test-lib" % "1.6.22-gacd233d",
+      // Specs2 support
+      "org.specs2" %% "specs2-core" % "4.21.0" withSources(),
+      "org.specs2" %% "specs2-matcher-extra" % "4.21.0" withSources(),
+      "org.specs2" %% "specs2-junit" % "4.21.0" withSources(),
 
       // only required whilst we continue to cross-compile to Scala 2.12
       "org.scala-lang.modules" %% "scala-collection-compat" % "2.12.0"
     ),
-    addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3"),
-    addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
+    libraryDependencies ++= {
+      if (scalaVersion.value.startsWith("3.")) Seq.empty
+      else Seq(
+        compilerPlugin(("org.typelevel" %% "kind-projector" % "0.13.3").cross(CrossVersion.full))
+      )
+    },
+    // activate kind-projector in Scala 3
+    scalacOptions ++= {
+      if (scalaVersion.value.startsWith("3.")) Seq("-Ykind-projector")
+      else Seq.empty
+    }
   )
 
 credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
+ThisBuild / semanticdbVersion := "4.13.4"
 
 resolvers ++= Seq(
   "ACPArtifactory Lib Snapshot" at "https://artifactory.digital.homeoffice.gov.uk/artifactory/libs-snapshot-local/",
@@ -54,8 +67,8 @@ Test / packageBin / publishArtifact := true
 Test / packageDoc / publishArtifact := true
 Test / packageSrc / publishArtifact := true
 
-fork in run := true
-fork in test := true
+Compile / run / fork := true
+Test / run / fork := true
 
 git.useGitDescribe := true
 git.gitDescribePatterns := Seq("v*.*")

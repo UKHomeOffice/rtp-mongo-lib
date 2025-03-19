@@ -4,7 +4,7 @@ import com.typesafe.scalalogging.Logger
 
 case class MongoError(message :String) {
 
-  val logger = Logger("MongoError")
+  val logger: Logger = Logger("MongoError")
   logger.info(s"MONGO ERROR RAISED: $message")
 
   def prefix(prefix :String) :MongoError = MongoError(s"${prefix}: ${message}")
