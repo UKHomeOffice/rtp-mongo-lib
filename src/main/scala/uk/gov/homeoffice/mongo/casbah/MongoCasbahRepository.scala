@@ -19,9 +19,12 @@ import io.circe.Json
 import scala.util.Try
 import org.bson.types.ObjectId
 
+import org.mongodb.scala.SingleObservableFuture
+import org.mongodb.scala.ToSingleObservablePublisher
+import org.mongodb.scala.ObservableFuture
+
 class MongoCasbahRepository(_mongoJsonRepository :MongoJsonRepository) {
   import cats.effect.unsafe.implicits.global
-  import org.mongodb.scala.given
 
   val mongoJsonRepository :MongoJsonRepository = _mongoJsonRepository
 

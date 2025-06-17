@@ -3,20 +3,23 @@ package uk.gov.homeoffice.mongo.sample
 import cats.effect.IO
 import org.mongodb.scala.bson.collection.immutable.Document
 
-import uk.gov.homeoffice.mongo.{*, given}
-import uk.gov.homeoffice.mongo.casbah.{*, given}
-import uk.gov.homeoffice.mongo.repository.*
-import uk.gov.homeoffice.mongo.model.*
-import uk.gov.homeoffice.mongo.model.syntax.*
-import uk.gov.homeoffice.mongo.model.syntax.*
+import uk.gov.homeoffice.mongo._
+import uk.gov.homeoffice.mongo.casbah._
+import uk.gov.homeoffice.mongo.repository._
+import uk.gov.homeoffice.mongo.model._
+import uk.gov.homeoffice.mongo.model.syntax._
+import uk.gov.homeoffice.mongo.model.syntax._
+
+import org.mongodb.scala.SingleObservableFuture
+import org.mongodb.scala.ToSingleObservablePublisher
+import org.mongodb.scala.ObservableFuture
 
 import scala.reflect.ClassTag
 
 import scala.concurrent.Future
 
 object ExampleApp extends App {
-  import org.mongodb.scala.given
-  import org.mongodb.scala.result.*
+  import org.mongodb.scala.result._
   import cats.effect.unsafe.implicits.global
   println("test app started")
 

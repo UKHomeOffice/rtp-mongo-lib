@@ -15,9 +15,9 @@ import uk.gov.homeoffice.mongo.model.syntax._
 
 import cats.effect.unsafe.implicits.global
 import uk.gov.homeoffice.mongo.MongoConnection
+import org.mongodb.scala.documentToUntypedDocument
 
 class MongoStreamRepositorySpec extends Specification {
-  import org.mongodb.scala.given
   
   sequential
 

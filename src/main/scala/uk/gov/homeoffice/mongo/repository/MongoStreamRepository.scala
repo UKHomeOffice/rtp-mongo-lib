@@ -35,7 +35,8 @@ class MongoStreamRepository(
   val primaryKeys :List[String] = List()
 ) {
   import uk.gov.homeoffice.mongo.MongoHelpers._
-  import org.mongodb.scala.given
+  import org.mongodb.scala.SingleObservableFuture
+  import org.mongodb.scala.ToSingleObservablePublisher
   implicit val ec :ExecutionContext = ExecutionContext.global
 
   val collection: MongoCollection[Document] = mongoConnection.mongoCollection[Document](collectionName)

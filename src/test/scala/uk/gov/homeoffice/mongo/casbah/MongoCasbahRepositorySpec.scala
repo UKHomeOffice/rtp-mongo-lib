@@ -11,6 +11,9 @@ import scala.collection.mutable
 import scala.util.Try
 
 import org.specs2.mutable.Specification
+import org.mongodb.scala.SingleObservableFuture
+import org.mongodb.scala.ToSingleObservablePublisher
+import org.mongodb.scala.ObservableFuture
 
 import org.mongodb.scala.bson.Document
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -18,7 +21,6 @@ import scala.concurrent.duration._
 import uk.gov.homeoffice.mongo.MongoConnection
 
 class MongoCasbahRepositorySpec extends Specification {
-  import org.mongodb.scala.given
 
   sequential
 
