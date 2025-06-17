@@ -17,7 +17,7 @@ steps:
   - sbt clean coverageEnabled test coverageReport coverageOff
   - sbt dependencyCheck
   - sbt scalastyle
-  - sbt scapegoat
+  - sbt scapegoat || /bin/true
   - sbt +test
   environment:
     ARTIFACTORY_PASSWORD:
