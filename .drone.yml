@@ -32,7 +32,7 @@ steps:
     - push
     - tag
 
-- name: sonar_scanner_sbt
+- name: sonar-scanner
   pull: if-not-exists
   image: quay.io/ukhomeofficedigital/sonar-scanner:v4.6
   commands:
