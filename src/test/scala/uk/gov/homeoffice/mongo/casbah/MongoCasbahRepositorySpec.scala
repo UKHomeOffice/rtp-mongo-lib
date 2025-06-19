@@ -11,16 +11,20 @@ import scala.collection.mutable
 import scala.util.Try
 
 import org.specs2.mutable.Specification
+import org.mongodb.scala.SingleObservableFuture
+import org.mongodb.scala.ToSingleObservablePublisher
+import org.mongodb.scala.ObservableFuture
 
 import org.mongodb.scala.bson.Document
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
+import uk.gov.homeoffice.mongo.MongoConnection
 
 class MongoCasbahRepositorySpec extends Specification {
 
   sequential
 
-  val testConnection = TestMongo.testConnection()
+  val testConnection: MongoConnection = TestMongo.testConnection()
 
   val casbahRepoTest = new MongoCasbahRepository(
     new MongoJsonRepository(
@@ -43,7 +47,7 @@ class MongoCasbahRepositorySpec extends Specification {
         "hello" -> "world"
       ))
 
-      result.wasAcknowledged mustEqual true
+      result.wasAcknowledged() mustEqual true
       result.getInsertedId().toHexString mustEqual hardcodedId
 
       // use native code to ensure backend serialisation is as expected
@@ -76,7 +80,7 @@ class MongoCasbahRepositorySpec extends Specification {
       val firstWriteResult = casbahRepoTest.save(myObject)
 
       firstWriteResult.getUpsertedId() must beSome(new ObjectId(hardcodedId))
-      firstWriteResult.wasAcknowledged must beTrue
+      firstWriteResult.wasAcknowledged() must beTrue
       firstWriteResult.getMatchedCount() mustEqual 0
       firstWriteResult.getModifiedCount() mustEqual 0
       firstWriteResult.getN() mustEqual 0
@@ -87,7 +91,7 @@ class MongoCasbahRepositorySpec extends Specification {
       val secondWriteResult = casbahRepoTest.save(myObject) // This is an overwrite.
 
       secondWriteResult.getUpsertedId() must beNone
-      secondWriteResult.wasAcknowledged must beTrue
+      secondWriteResult.wasAcknowledged() must beTrue
       secondWriteResult.getMatchedCount() mustEqual 1
       secondWriteResult.getModifiedCount() mustEqual 1
       secondWriteResult.getN() mustEqual 1
@@ -154,12 +158,12 @@ class MongoCasbahRepositorySpec extends Specification {
       
       val findList = casbahRepoTest.find(MongoDBObject("query" -> 2))
 
-      findList.toList.length mustEqual 1
+      findList.toList().length mustEqual 1
 
       /* check no use of iterators which means toList is empty on subsequent calls */
-      findList.toList.length mustEqual 1
+      findList.toList().length mustEqual 1
 
-      findList.toList.headOption.flatMap(_.getAs[Int]("query")) must beSome(2)
+      findList.toList().headOption.flatMap(_.getAs[Int]("query")) must beSome(2)
 
     }
 
@@ -171,8 +175,8 @@ class MongoCasbahRepositorySpec extends Specification {
 
       val findList = casbahRepoTest.find(MongoDBObject("listCheck" -> MongoDBObject("$gte" -> 3)))
 
-      findList.toList.length mustEqual 2
-      findList.toList.map(_.as[Int]("listCheck")) mustEqual List(3,4)
+      findList.toList().length mustEqual 2
+      findList.toList().map(_.as[Int]("listCheck")) mustEqual List(3,4)
     }
 
     "find works on nested MongoDBObjects" in {
@@ -187,9 +191,9 @@ class MongoCasbahRepositorySpec extends Specification {
         ))
       )
 
-      findList.toList.length mustEqual 2
+      findList.toList().length mustEqual 2
       // relies on dotted notation in MongoDBObject working
-      findList.toList.map(_.as[String]("nestedCheck.name")) mustEqual List("Alvin", "Simon")
+      findList.toList().map(_.as[String]("nestedCheck.name")) mustEqual List("Alvin", "Simon")
     }
 
     "find.sort on a DBCursor works" in {
@@ -199,11 +203,11 @@ class MongoCasbahRepositorySpec extends Specification {
 
       val ascendingResults = casbahRepoTest.find(MongoDBObject("sortables" -> MongoDBObject("$exists" -> 1))).sort(MongoDBObject("sortables" -> 1))
 
-      ascendingResults.toList.map(_.as[String]("sortables")) mustEqual List("pa", "pb", "pc")
+      ascendingResults.toList().map(_.as[String]("sortables")) mustEqual List("pa", "pb", "pc")
 
       val descendingResults = casbahRepoTest.find(MongoDBObject("sortables" -> MongoDBObject("$exists" -> 1))).sort(MongoDBObject("sortables" -> -1))
 
-      descendingResults.toList.map(_.as[String]("sortables")) mustEqual List("pc", "pb", "pa")
+      descendingResults.toList().map(_.as[String]("sortables")) mustEqual List("pc", "pb", "pa")
     }
 
     "find.limit on a DBCursor works" in {
@@ -211,7 +215,7 @@ class MongoCasbahRepositorySpec extends Specification {
       casbahRepoTest.save(MongoDBObject("erin" -> "p"))
       casbahRepoTest.save(MongoDBObject("erin" -> "p"))
 
-      val listOfTwo = casbahRepoTest.find(MongoDBObject("erin" -> "p")).limit(2).toList
+      val listOfTwo = casbahRepoTest.find(MongoDBObject("erin" -> "p")).limit(2).toList()
 
       listOfTwo.length mustEqual 2
     }
@@ -225,11 +229,11 @@ class MongoCasbahRepositorySpec extends Specification {
 
       val unrealisedCursor :DBCursor[MongoDBObject] = casbahRepoTest.find(MongoDBObject("directory" -> MongoDBObject("$exists" -> true))).sort(MongoDBObject("directory" -> 1))
 
-      val realisedResultset :List[MongoDBObject] = unrealisedCursor.toList
+      val realisedResultset :List[MongoDBObject] = unrealisedCursor.toList()
       realisedResultset.length mustEqual 5
 
       val reusedCursorWithSkip :DBCursor[MongoDBObject] = unrealisedCursor.skip(2).limit(2)
-      val realisedReusedCursor :List[MongoDBObject] = reusedCursorWithSkip.toList
+      val realisedReusedCursor :List[MongoDBObject] = reusedCursorWithSkip.toList()
 
       realisedReusedCursor.length mustEqual 2
       realisedReusedCursor.map(_.as[Int]("directory")) mustEqual List(3,4)
@@ -272,7 +276,7 @@ class MongoCasbahRepositorySpec extends Specification {
         )
       )
 
-      val result = missingTable.count(MongoDBObject.empty)
+      val result = missingTable.count(MongoDBObject.empty())
       result mustEqual 0
     }
 

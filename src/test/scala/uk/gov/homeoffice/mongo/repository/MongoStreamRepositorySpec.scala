@@ -14,13 +14,15 @@ import uk.gov.homeoffice.mongo.model.MongoError
 import uk.gov.homeoffice.mongo.model.syntax._
 
 import cats.effect.unsafe.implicits.global
+import uk.gov.homeoffice.mongo.MongoConnection
+import org.mongodb.scala.documentToUntypedDocument
 
 class MongoStreamRepositorySpec extends Specification {
   
   sequential
 
   class Context extends Scope {
-    val testConnection = TestMongo.testConnection()
+    val testConnection: MongoConnection = TestMongo.testConnection()
 
     val streamRepo = new MongoStreamRepository(
       testConnection,
@@ -137,7 +139,7 @@ class MongoStreamRepositorySpec extends Specification {
 
       val qry = Try(streamRepo.find(Document("$exists" -> 1)).sort(Document("$nin" -> false)).limit(-1)).toEither
 
-      val realised :Either[Throwable, List[Either[Throwable, MongoResult[Document]]]] = Try(qry.right.get.toFS2Stream.attempt.compile.toList.unsafeRunSync).toEither
+      val realised :Either[Throwable, List[Either[Throwable, MongoResult[Document]]]] = Try(qry.right.get.toFS2Stream().attempt.compile.toList.unsafeRunSync()).toEither
       realised must beRight
 
       val mongoResult :MongoResult[Document] = realised.right.get.headOption.get.right.get

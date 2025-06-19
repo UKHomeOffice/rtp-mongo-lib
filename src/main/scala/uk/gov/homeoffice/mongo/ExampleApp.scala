@@ -8,10 +8,19 @@ import uk.gov.homeoffice.mongo.casbah._
 import uk.gov.homeoffice.mongo.repository._
 import uk.gov.homeoffice.mongo.model._
 import uk.gov.homeoffice.mongo.model.syntax._
+import uk.gov.homeoffice.mongo.model.syntax._
 
-import cats.effect.unsafe.implicits.global
+import org.mongodb.scala.SingleObservableFuture
+import org.mongodb.scala.ToSingleObservablePublisher
+import org.mongodb.scala.ObservableFuture
+
+import scala.reflect.ClassTag
+
+import scala.concurrent.Future
 
 object ExampleApp extends App {
+  import org.mongodb.scala.result._
+  import cats.effect.unsafe.implicits.global
   println("test app started")
 
   // connect to localhost test db
@@ -29,20 +38,28 @@ object ExampleApp extends App {
   */
 
   // Write a record into the database (remember waiting on the future is important)
-  scala.concurrent.Await.result(globalDatabaseConnection.mongoCollection("exampleLogins").insertOne(Document(
-    "hello" -> true
-  )).head(), scala.concurrent.duration.Duration.Inf)
+  scala.concurrent.Await.result(
+    globalDatabaseConnection.mongoCollection[Document]("exampleLogins").insertOne(Document("hello" -> true)).head(),
+    scala.concurrent.duration.Duration.Inf
+  )
 
-  val retval = globalDatabaseConnection.mongoCollection("exampleLogins").find[Document](Document.empty).sort(Document("hello" -> 1)).limit(1).toSingle().toFutureOption()
+  val retval: Future[Option[Document]] = globalDatabaseConnection
+    .mongoCollection[Document]("exampleLogins")
+    .find(Document.empty)
+    .sort(Document("hello" -> 1))
+    .limit(1)
+    .toSingle()
+    .toFutureOption()
+
   println("search with delay returned: " + scala.concurrent.Await.result(retval, scala.concurrent.duration.Duration.Inf))
 
   // turn a collection into a repository and gain access to fs2 features.
   val basicBookRepository = new MongoStreamRepository(globalDatabaseConnection, "books", List("_id"))
 
-  val allBooks = basicBookRepository.all().compile.toList.unsafeRunSync()
+  val allBooks: List[MongoResult[Document]] = basicBookRepository.all().compile.toList.unsafeRunSync()
   println(s"All Books: ${allBooks}")
 
-  val miceAndMen = basicBookRepository.find(Document("title" -> "Mice and Men")).toFS2Stream().compile.toList.unsafeRunSync()
+  val miceAndMen: List[MongoResult[Document]] = basicBookRepository.find(Document("title" -> "Mice and Men")).toFS2Stream().compile.toList.unsafeRunSync()
   println(s"Search for one book: ${miceAndMen}")
 
   /*
@@ -65,17 +82,17 @@ object ExampleApp extends App {
     case Right(book) => Right(book)
   }}
 
-  val autoBookRepository = new MongoObjectRepository[Book](new MongoJsonRepository(basicBookRepository)) {
+  val autoBookRepository: MongoObjectRepository[Book] = new MongoObjectRepository[Book](new MongoJsonRepository(basicBookRepository)) {
     def jsonToObject(json :Json) :MongoResult[Book] = jsonToBook(json)
     def objectToJson(obj :Book) :MongoResult[Json] = bookToJson(obj)
   }
 
   // insert a book
-  val saveResult = autoBookRepository.insertOne(Book("The Davinci Code", "Mike row", "743927492")).unsafeRunSync()
+  val saveResult: MongoResult[Json] = autoBookRepository.insertOne(Book("The Davinci Code", "Mike row", "743927492")).unsafeRunSync()
   println(s"Saving Davinci code returned: $saveResult")
 
   // read a book
-  val daVinci = autoBookRepository.findOne(Json.obj("title" -> Json.fromString("The Davinci Code"))).unsafeRunSync()
+  val daVinci: MongoResult[Option[Book]] = autoBookRepository.findOne(Json.obj("title" -> Json.fromString("The Davinci Code"))).unsafeRunSync()
   daVinci match {
     case Left(mongoError) => println(s"Unable to reinflate daVinci: $mongoError")
     case Right(None) => println(s"Davinci book not found")
@@ -89,10 +106,10 @@ object ExampleApp extends App {
   */
 
   val casbahRepo = new MongoCasbahRepository(new MongoJsonRepository(basicBookRepository))
-  val mongoRecord :Option[MongoDBObject] = casbahRepo.find(MongoDBObject("title" -> "The Davinci Code")).toList.headOption
+  val mongoRecord :Option[MongoDBObject] = casbahRepo.find(MongoDBObject("title" -> "The Davinci Code")).toList().headOption
   println(s"Casbah MongoDBObject style access: $mongoRecord")
 
-  val salatRepo = new MongoCasbahSalatRepository[Book](casbahRepo) {
+  val salatRepo: MongoCasbahSalatRepository[Book] = new MongoCasbahSalatRepository[Book](casbahRepo) {
     def toMongoDBObject(a :Book) :MongoResult[MongoDBObject] = Right(MongoDBObject("author" -> a.author, "title" -> a.title, "isbn" -> a.isbn))
     def fromMongoDBObject(mongoDBObject :MongoDBObject) :MongoResult[Book] =
       (for {
@@ -105,18 +122,18 @@ object ExampleApp extends App {
       }
   }
 
-  val aliceInWonderland = salatRepo.save(Book("Alice in Wonderland", "Carol", "678234832"))
-  val changed = aliceInWonderland.copy(isbn="86738921")
+  val aliceInWonderland: Book = salatRepo.save(Book("Alice in Wonderland", "Carol", "678234832"))
+  val changed: Book = aliceInWonderland.copy(isbn="86738921")
 
   salatRepo.save(changed)
 
-  val casbahFindResults :List[Book] = salatRepo.find(casbah.MongoDBObject("title" -> "Alice in Wonderland")).toList
+  val casbahFindResults :List[Book] = salatRepo.find(casbah.MongoDBObject("title" -> "Alice in Wonderland")).toList()
   println(s"result count: ${casbahFindResults.length}")
   println(s"first result: ${casbahFindResults.headOption}")
 
   // example MongoDBObjects and how they translate to JSON
 
-  val testObj = casbah.MongoDBObject("date" -> ("$gt" -> new java.util.Date()))
+  val testObj: MongoDBObject = casbah.MongoDBObject("date" -> ("$gt" -> new java.util.Date()))
   testObj.put("deleted" -> false)
   testObj.put("_id" -> "12121")
 

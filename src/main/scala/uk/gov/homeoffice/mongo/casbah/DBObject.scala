@@ -7,8 +7,8 @@ import org.joda.time.DateTime
 
 class DBObject(val mongoDBObject :MongoDBObject) {
 
-  def containsField(key :String) = mongoDBObject.containsField(key)
-  def containsKey(key :String) = mongoDBObject.containsKey(key)
+  def containsField(key :String): Boolean = mongoDBObject.containsField(key)
+  def containsKey(key :String): Boolean = mongoDBObject.containsKey(key)
 
   def get(key :String) :Object = {
 
@@ -38,9 +38,9 @@ class DBObject(val mongoDBObject :MongoDBObject) {
     }
   }
 
-  def keySet() :java.util.Set[String] = mongoDBObject.keySet.asJava
-  def put(key :String, value :Object) = mongoDBObject += (key -> value)
-  def removeField(key :String) = mongoDBObject.removeField(key)
+  def keySet() :java.util.Set[String] = mongoDBObject.keySet().asJava
+  def put(key :String, value :Object): MongoDBObject = mongoDBObject += (key -> value)
+  def removeField(key :String): Unit = mongoDBObject.removeField(key)
 
   override def toString() :String = {
     s"DB OBJECT: ${mongoDBObject}"

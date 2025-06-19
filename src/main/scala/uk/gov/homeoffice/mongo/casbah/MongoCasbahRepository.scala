@@ -19,27 +19,31 @@ import io.circe.Json
 import scala.util.Try
 import org.bson.types.ObjectId
 
+import org.mongodb.scala.SingleObservableFuture
+import org.mongodb.scala.ToSingleObservablePublisher
+import org.mongodb.scala.ObservableFuture
+
 class MongoCasbahRepository(_mongoJsonRepository :MongoJsonRepository) {
   import cats.effect.unsafe.implicits.global
 
   val mongoJsonRepository :MongoJsonRepository = _mongoJsonRepository
 
   def insertOne(mongoDBObject :MongoDBObject) :CasbahInsertResult = {
-    mongoJsonRepository.insertOne(mongoDBObject.toJson).unsafeRunSync() match {
+    mongoJsonRepository.insertOne(mongoDBObject.toJson()).unsafeRunSync() match {
       case Left(mongoError) => throw new MongoException(s"MONGO EXCEPTION MongoCasbahRepository.insertOne($mongoDBObject): $mongoError")
       case Right(insertResultJson) => CasbahInsertResult(insertResultJson)
     }
   }
 
   def save(mongoDBObject :MongoDBObject) :CasbahWriteResult = {
-    mongoJsonRepository.save(mongoDBObject.toJson).unsafeRunSync() match {
+    mongoJsonRepository.save(mongoDBObject.toJson()).unsafeRunSync() match {
       case Left(mongoError) => throw new MongoException(s"MONGO EXCEPTION: MongoCasbahRepository.save($mongoDBObject): $mongoError")
       case Right(writeResultJson) => CasbahWriteResult(writeResultJson)
     }
   }
 
   def findOne(filter :MongoDBObject) :Option[MongoDBObject] = {
-    mongoJsonRepository.findOne(filter.toJson).unsafeRunSync() match {
+    mongoJsonRepository.findOne(filter.toJson()).unsafeRunSync() match {
       case Left(mongoError) => throw new MongoException(s"MONGO EXCEPTION: MongoCasbahRepository.findOne($filter): $mongoError")
       case Right(None) => None
       case Right(Some(json)) => Some(MongoDBObject(json))
@@ -47,20 +51,20 @@ class MongoCasbahRepository(_mongoJsonRepository :MongoJsonRepository) {
   }
 
   def find(filter :MongoDBObject) :DBCursor[MongoDBObject] =
-    new DBCursorMongoDBObjectImpl(mongoJsonRepository.find(filter.toJson))
+    new DBCursorMongoDBObjectImpl(mongoJsonRepository.find(filter.toJson()))
 
   def find(filter :MongoDBObject, projection :MongoDBObject) :DBCursor[MongoDBObject] =
     find(filter).projection(projection)
 
   def count(filter :MongoDBObject) :Long = {
-    mongoJsonRepository.countDocuments(filter.toJson).unsafeRunSync() match {
+    mongoJsonRepository.countDocuments(filter.toJson()).unsafeRunSync() match {
       case Left(mongoError) => throw new MongoException(s"MONGO EXCEPTION: MongoCasbahRepository.count($filter): $mongoError")
       case Right(countLong) => countLong
     }
   }
 
   def aggregate(filter :List[MongoDBObject]) :List[MongoDBObject] = {
-    val jsonList = filter.map(_.toJson)
+    val jsonList = filter.map(_.toJson())
     val streamResponse :fs2.Stream[IO, MongoResult[Json]] = mongoJsonRepository.aggregate(jsonList)
     val resultList = streamResponse.compile.toList.unsafeRunSync()
     MongoHelpers.mongoResultCollect(resultList) match {
@@ -73,19 +77,19 @@ class MongoCasbahRepository(_mongoJsonRepository :MongoJsonRepository) {
   def update(target :MongoDBObject, changes :MongoDBObject, multi: Boolean = true, upsert :Boolean = false) :CasbahWriteResult = {
 
     // Lift raw replacements into $set automatically
-    val changesWithSet = changes.keySet.exists(_.startsWith("$")) match {
+    val changesWithSet = changes.keySet().exists(_.startsWith("$")) match {
       case true => changes
       case false => MongoDBObject("$set" -> changes)
     }
 
     multi match {
       case true =>
-        mongoJsonRepository.updateMany(target.toJson, changesWithSet.toJson, upsert).unsafeRunSync() match {
+        mongoJsonRepository.updateMany(target.toJson(), changesWithSet.toJson(), upsert).unsafeRunSync() match {
           case Left(mongoError) => throw new Exception(s"MONGO EXCEPTION: MongoCasbahRepository.update($target, $changesWithSet): (UpdateMany) $mongoError")
           case Right(updateResultJson) => CasbahWriteResult(updateResultJson)
         }
       case false =>
-        mongoJsonRepository.updateOne(target.toJson, changesWithSet.toJson, upsert).unsafeRunSync() match {
+        mongoJsonRepository.updateOne(target.toJson(), changesWithSet.toJson(), upsert).unsafeRunSync() match {
           case Left(mongoError) => throw new Exception(s"MONGO EXCEPTION: MongoCasbahRepository.update($target, $changesWithSet): (UpdateOne) $mongoError")
           case Right(updateResultJson) => CasbahWriteResult(updateResultJson)
         }
@@ -101,12 +105,12 @@ class MongoCasbahRepository(_mongoJsonRepository :MongoJsonRepository) {
   def remove(query :MongoDBObject, multi :Boolean = true) :CasbahDeleteResult =
     multi match {
       case false =>
-        mongoJsonRepository.deleteOne(query.toJson).unsafeRunSync() match {
+        mongoJsonRepository.deleteOne(query.toJson()).unsafeRunSync() match {
           case Left(mongoError) => throw new MongoException(mongoError.message)
           case Right(deleteResult) => CasbahDeleteResult(Json.obj("getN" -> Json.fromLong(deleteResult.getDeletedCount)))
         }
       case true =>
-        mongoJsonRepository.deleteMany(query.toJson).unsafeRunSync() match {
+        mongoJsonRepository.deleteMany(query.toJson()).unsafeRunSync() match {
           case Left(mongoError) => throw new MongoException(mongoError.message)
           case Right(deleteResult) => CasbahDeleteResult(Json.obj("getN" -> Json.fromLong(deleteResult.getDeletedCount)))
         }
@@ -148,7 +152,7 @@ class MongoCasbahRepository(_mongoJsonRepository :MongoJsonRepository) {
       case Left(mongoError) => throw new MongoException(s"MONGO EXCEPTION: MongoCasbahRepository.distinct($fieldName, $filter): $mongoError")
       case Right(string) => string
     }
-    val resultList :List[String] = mongoJsonRepository.distinct(fieldName, filter.toJson).map(a => stripErrors(a)).compile.toList.unsafeRunSync()
+    val resultList :List[String] = mongoJsonRepository.distinct(fieldName, filter.toJson()).map(a => stripErrors(a)).compile.toList.unsafeRunSync()
     //new DBCursor(resultList)
     resultList
   }

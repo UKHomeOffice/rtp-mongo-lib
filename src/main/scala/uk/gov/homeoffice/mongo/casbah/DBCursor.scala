@@ -27,10 +27,10 @@ sealed trait DBCursor[A] {
 class DBCursorMongoDBObjectImpl(jsonObservable :JsonObservable) extends DBCursor[MongoDBObject] {
 
   def projection(projection :MongoDBObject) :DBCursor[MongoDBObject] =
-    new DBCursorMongoDBObjectImpl(jsonObservable.projection(projection.toJson))
+    new DBCursorMongoDBObjectImpl(jsonObservable.projection(projection.toJson()))
 
   def sort(orderBy :MongoDBObject) :DBCursor[MongoDBObject] =
-    new DBCursorMongoDBObjectImpl(jsonObservable.sort(orderBy.toJson))
+    new DBCursorMongoDBObjectImpl(jsonObservable.sort(orderBy.toJson()))
 
   /* limit is not the same as fs2Stream.take(). limit becomes part of the mongo command executed on the
    * database server. The query isn't executed and results realised until unsafeRunSync is called on
@@ -64,7 +64,7 @@ class DBCursorWrappedImpl[A, B](dbCursor :DBCursor[B], fn :(B => A)) extends DBC
   def limit(n :Int) :DBCursor[A] = new DBCursorWrappedImpl[A, B](dbCursor.limit(n), fn)
   def skip(n :Int) :DBCursor[A] = new DBCursorWrappedImpl[A, B](dbCursor.skip(n), fn)
 
-  def stream() :fs2.Stream[IO, A] = dbCursor.stream.map(fn)
+  def stream() :fs2.Stream[IO, A] = dbCursor.stream().map(fn)
 
   def map[C](fnAC :A => C) :DBCursor[C] = {
     new DBCursorWrappedImpl[C, A](this, fnAC)

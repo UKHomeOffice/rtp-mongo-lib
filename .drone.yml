@@ -8,73 +8,63 @@ platform:
   arch: amd64
 
 steps:
-- name: drone_s3_cache_pull
-  pull: if-not-exists
-  image: quay.io/ukhomeofficedigital/drone-s3cache:v0.2.0
-  settings:
-    drone_s3_cache_mode: pull
-  environment:
-    DRONE_S3_CACHE_AWS_ACCESS_KEY_ID:
-      from_secret: DRONE_S3_CACHE_AWS_ACCESS_KEY_ID
-    DRONE_S3_CACHE_AWS_SECRET_ACCESS_KEY:
-      from_secret: DRONE_S3_CACHE_AWS_SECRET_ACCESS_KEY
-  when:
-    event:
-    - push
-    - tag
-
 - name: build
-  pull: if-not-exists
-  image: quay.io/ukhomeofficedigital/scala-sbt:latest
+  pull: Always
+  image: 340268328991.dkr.ecr.eu-west-2.amazonaws.com/rtge/scala-sbt:latest
   commands:
-  - /root/entrypoint.sh
+  - . /app/entrypoint.sh
   - git fetch --tags
-  - sbt clean test
+  - sbt clean coverageEnabled test coverageReport coverageOff
+  - sbt dependencyCheck
+  - sbt scalastyle
+  - sbt scapegoat || /bin/true
+  - sbt +test
   environment:
     ARTIFACTORY_PASSWORD:
       from_secret: ARTIFACTORY_PASSWORD
     ARTIFACTORY_USERNAME: regt-build-bot
     DB_TEST_HOST: database
+    JRE_VERSION: 21
+    OVERRIDE_BUILD_REPOS: "false"
+    HOME: "/app"
   when:
     event:
     - push
     - tag
 
-- name: drone_s3_cache_push
+- name: sonar-scanner
   pull: if-not-exists
-  image: quay.io/ukhomeofficedigital/drone-s3cache:v0.2.0
-  settings:
-    drone_s3_cache_folders: .ivy2
-    drone_s3_cache_mode: push
-  environment:
-    DRONE_S3_CACHE_AWS_ACCESS_KEY_ID:
-      from_secret: DRONE_S3_CACHE_AWS_ACCESS_KEY_ID
-    DRONE_S3_CACHE_AWS_SECRET_ACCESS_KEY:
-      from_secret: DRONE_S3_CACHE_AWS_SECRET_ACCESS_KEY
+  image: quay.io/ukhomeofficedigital/sonar-scanner:v4.6
+  commands:
+  - sonar-scanner
   when:
     event:
     - push
     - tag
+  depends_on:
+    - build
 
 - name: publish
-  pull: if-not-exists
-  image: quay.io/ukhomeofficedigital/scala-sbt:latest
+  pull: Always
+  image: 340268328991.dkr.ecr.eu-west-2.amazonaws.com/rtge/scala-sbt:latest
   commands:
-  - /root/entrypoint.sh
+  - . /app/entrypoint.sh
   - sbt +publish
   environment:
     ARTIFACTORY_PASSWORD:
       from_secret: ARTIFACTORY_PASSWORD
     ARTIFACTORY_SERVER: https://artifactory.digital.homeoffice.gov.uk/
     ARTIFACTORY_USERNAME: regt-build-bot
+    JRE_VERSION: 21
+    OVERRIDE_BUILD_REPOS: "false"
   when:
-    branch:
-    - master
+#   branch:
+#   - master
     event:
     - push
     - tag
   depends_on:
-    - build
+    - sonar-scanner
 
 services:
   - name: database

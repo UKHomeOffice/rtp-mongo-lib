@@ -23,7 +23,7 @@ import uk.gov.homeoffice.mongo.model.syntax._
 class MongoJsonRepository(_mongoStreamRepository :MongoStreamRepository) {
   import MongoJsonRepository._
 
-  val logger = Logger("JsonRepository")
+  val logger: Logger = Logger("JsonRepository")
   val mongoStreamRepository :MongoStreamRepository = _mongoStreamRepository
 
 
@@ -155,7 +155,7 @@ class MongoJsonRepository(_mongoStreamRepository :MongoStreamRepository) {
 }
 
 object MongoJsonRepository {
-  val logger = Logger("JsonRepository")
+  val logger: Logger = Logger("JsonRepository")
 
   def jsonToDocument(json :Json) :MongoResult[Document] = {
     // See the README for notes about how deepDropNullValues can cause unanticipated errors in your queries (e.g. $group: { _id: null }...)

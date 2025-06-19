@@ -1,6 +1,6 @@
 package uk.gov.homeoffice.mongo.casbah
 
-class MongoDBObjectBuilder(init :MongoDBObject = MongoDBObject.empty) {
+class MongoDBObjectBuilder(init :MongoDBObject = MongoDBObject.empty()) {
 
   var obj :MongoDBObject = init
 

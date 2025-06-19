@@ -6,6 +6,7 @@ import org.mongodb.scala.bson.collection.immutable.Document
 import org.mongodb.scala.{ConnectionString, MongoClient, MongoClientSettings, MongoDatabase, WriteConcern}
 
 import scala.reflect.ClassTag
+import org.mongodb.scala.MongoCollection
 
 case class MongoConnection(
   connectionString :String,
@@ -13,7 +14,7 @@ case class MongoConnection(
   client :MongoClient,
   database :MongoDatabase
 ) {
-  def mongoCollection[T : ClassTag](collectionName :String) = database.getCollection[T](collectionName)
+  def mongoCollection[T : ClassTag](collectionName :String): MongoCollection[T] = database.getCollection[T](collectionName)
 }
 
 object MongoConnector extends StrictLogging {
@@ -25,7 +26,7 @@ object MongoConnector extends StrictLogging {
 
     logger.info (s"Connecting to Mongo using connection string: ${connectionString.replaceAll(":.*@",":*****@")}")
 
-    val settings = MongoClientSettings.builder
+    val settings = MongoClientSettings.builder()
       .applicationName(appName)
       .codecRegistry(DEFAULT_CODEC_REGISTRY)
       .writeConcern(WriteConcern.ACKNOWLEDGED)
