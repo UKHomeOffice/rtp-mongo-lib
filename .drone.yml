@@ -58,8 +58,8 @@ steps:
     JRE_VERSION: 21
     OVERRIDE_BUILD_REPOS: "false"
   when:
-#   branch:
-#   - master
+    branch:
+    - master
     event:
     - push
     - tag

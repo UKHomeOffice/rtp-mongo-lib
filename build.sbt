@@ -9,31 +9,29 @@ val root = Project(id = "rtp-mongo-lib", base = file("."))
     scalaVersion := "3.3.5",
     crossScalaVersions := Seq("2.13.16","3.3.5"),
     libraryDependencies ++= Seq(
-      "ch.qos.logback" % "logback-classic" % "1.5.17",
+      "ch.qos.logback" % "logback-classic" % "1.5.18",
       "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5",
-      "io.netty"         % "netty-all" % "4.1.112.Final",
+      "io.netty"         % "netty-all" % "4.2.2.Final",
 
-      ("org.mongodb.scala" %% "mongo-scala-driver" % "5.1.3").cross(CrossVersion.for3Use2_13),
+      ("org.mongodb.scala" %% "mongo-scala-driver" % "5.5.1").cross(CrossVersion.for3Use2_13),
 
       // Json support
-      "io.circe" %% "circe-core" % "0.14.9",
-      "io.circe" %% "circe-generic" % "0.14.9",
-      "io.circe" %% "circe-parser" % "0.14.9",
+      "io.circe" %% "circe-core" % "0.14.14",
+      "io.circe" %% "circe-generic" % "0.14.14",
+      "io.circe" %% "circe-parser" % "0.14.14",
 
       // cats effect and streaming support
-      "org.typelevel" %% "cats-effect" % "3.5.7",
-      "co.fs2" %% "fs2-core" % "3.10.2",
+      "org.typelevel" %% "cats-effect" % "3.6.1",
+      "co.fs2" %% "fs2-core" % "3.12.0",
 
       // joda datetime support
-      "joda-time" % "joda-time" % "2.13.1",
+      "joda-time" % "joda-time" % "2.14.0",
 
       // Specs2 support
       "org.specs2" %% "specs2-core" % "4.21.0" withSources(),
       "org.specs2" %% "specs2-matcher-extra" % "4.21.0" withSources(),
       "org.specs2" %% "specs2-junit" % "4.21.0" withSources(),
 
-      // only required whilst we continue to cross-compile to Scala 2.12
-      "org.scala-lang.modules" %% "scala-collection-compat" % "2.12.0"
     ),
     libraryDependencies ++= {
       if (scalaVersion.value.startsWith("3.")) Seq.empty
