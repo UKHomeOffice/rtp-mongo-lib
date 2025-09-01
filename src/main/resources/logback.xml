@@ -7,7 +7,7 @@
     </appender>
 
     <logger name="MongoError" level="INFO" />
-    <logger name="JsonRepository" level="DEBUG" />
+    <logger name="JsonRepository" level="INFO" />
     <root level="INFO">
         <appender-ref ref="STDOUT" />
     </root>
